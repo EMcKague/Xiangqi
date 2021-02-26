@@ -1,594 +1,225 @@
-# Author: Evan McKague
-# Date: 3/3/2020
-# Description: Creates a playable game of Xiangqi or Chinese Chess.
+
+import operator
 
 
 class XiangqiGame:
 
     def __init__(self):
-        """
-        Initializes game board and places pieces in starting positions, sets the first turn to red
-        """
-        self._game_board = \
-            {10: {'a': '____', 'b': "____", 'c': "____", 'd': "____", 'e': "____", 'f': "____", 'g': "____",
-                  'h': "____", 'i': "____"},
-             9: {'a': '____', 'b': "____", 'c': "____", 'd': "____", 'e': "____", 'f': "____", 'g': "____",
-                 'h': "____", 'i': "____"},
-             8: {'a': '____', 'b': "____", 'c': "____", 'd': "____", 'e': "____", 'f': "____", 'g': "____",
-                 'h': "____", 'i': "____"},
-             7: {'a': '____', 'b': "____", 'c': "____", 'd': "____", 'e': "____", 'f': "____", 'g': "____",
-                 'h': "____", 'i': "____"},
-             6: {'a': '____', 'b': "____", 'c': "____", 'd': "____", 'e': "____", 'f': "____", 'g': "____",
-                 'h': "____", 'i': "____"},
-             5: {'a': '____', 'b': "____", 'c': "____", 'd': "____", 'e': "____", 'f': "____", 'g': "____",
-                 'h': "____", 'i': "____"},
-             4: {'a': '____', 'b': "____", 'c': "____", 'd': "____", 'e': "____", 'f': "____", 'g': "____",
-                 'h': "____", 'i': "____"},
-             3: {'a': '____', 'b': "____", 'c': "____", 'd': "____", 'e': "____", 'f': "____", 'g': "____",
-                 'h': "____", 'i': "____"},
-             2: {'a': '____', 'b': "____", 'c': "____", 'd': "____", 'e': "____", 'f': "____", 'g': "____",
-                 'h': "____", 'i': "____"},
-             1: {'a': '____', 'b': "____", 'c': "____", 'd': "____", 'e': "____", 'f': "____", 'g': "____",
-                 'h': "____", 'i': "____"}}
+        self._game_board = [["____"] * 9 for i in range(10)]
         self._player_turn = "red"
-        self._unit_dictionary = \
-            {"red": {General: " RG ", Advisor: " RA ", Elephant: " RE ", Horse: " RH ", Chariot: "RCHA", Cannon: "RCAN",
-                     Solider: " RS "},
-             "black": {General: " BG ", Advisor: " BA ", Elephant: " BE ", Horse: " BH ", Chariot: "BCHA",
-                       Cannon: "BCAN",
-                       Solider: " BS "}}
-        self._letters_to_num = {"a": 1,
-                                "b": 2,
-                                "c": 3,
-                                "d": 4,
-                                "e": 5,
-                                "f": 6,
-                                "g": 7,
-                                "h": 8,
-                                "i": 9}
-        self._num_to_letter = {1: "a",
-                               2: "b",
-                               3: "c",
-                               4: "d",
-                               5: "e",
-                               6: "f",
-                               7: "g",
-                               8: "h",
-                               9: "i"}
         self._game_state = "UNFINISHED"
         self.set_pieces()
+        self._col_conversion = {
+                                "a": 0,
+                                "b": 1,
+                                "c": 2,
+                                "d": 3,
+                                "e": 4,
+                                "f": 5,
+                                "g": 6,
+                                "h": 7,
+                                "i": 8,
+                                0: "a",
+                                1: "b",
+                                2: "c",
+                                3: "d",
+                                4: "e",
+                                5: "f",
+                                6: "g",
+                                7: "h",
+                                8: "i"
+                            }
+        self._row_conversion = {
+                                    10: 0,
+                                    9: 1,
+                                    8: 2,
+                                    7: 3,
+                                    6: 4,
+                                    5: 5,
+                                    4: 6,
+                                    3: 7,
+                                    2: 8,
+                                    1: 9,
+                                    0: 10
+                                }
+        self.printStartMsg()
+        self.printBoardWithStyling()
+        
+    def set_pieces(self):
+        for i in range(len(self._game_board)):
 
-    def print_board(self):
-        """Displays the game board putting lines between each key of each sub-dictionary"""
-
-        print("| 10|" + str(self._game_board[10]['a']) + "|" + str(self._game_board[10]['b']) + "|" +
-              str(self._game_board[10]['c']) + "|" + str(self._game_board[10]['d']) + "|" +
-              str(self._game_board[10]['e']) + "|" + str(self._game_board[10]['f']) + "|" +
-              str(self._game_board[10]['g']) + "|" + str(self._game_board[10]['h']) + "|" +
-              str(self._game_board[10]['i']) + "|")
-        print("| 9 |" + str(self._game_board[9]['a']) + "|" + str(self._game_board[9]['b']) + "|" +
-              str(self._game_board[9]['c']) + "|" + str(self._game_board[9]['d']) + "|" +
-              str(self._game_board[9]['e']) + "|" + str(self._game_board[9]['f']) + "|" +
-              str(self._game_board[9]['g']) + "|" + str(self._game_board[9]['h']) + "|" +
-              str(self._game_board[9]['i']) + "|")
-        print("| 8 |" + str(self._game_board[8]['a']) + "|" + str(self._game_board[8]['b']) + "|" +
-              str(self._game_board[8]['c']) + "|" + str(self._game_board[8]['d']) + "|" +
-              str(self._game_board[8]['e']) + "|" + str(self._game_board[8]['f']) + "|" +
-              str(self._game_board[8]['g']) + "|" + str(self._game_board[8]['h']) + "|" +
-              str(self._game_board[8]['i']) + "|")
-        print("| 7 |" + str(self._game_board[7]['a']) + "|" + str(self._game_board[7]['b']) + "|" +
-              str(self._game_board[7]['c']) + "|" + str(self._game_board[7]['d']) + "|" +
-              str(self._game_board[7]['e']) + "|" + str(self._game_board[7]['f']) + "|" +
-              str(self._game_board[7]['g']) + "|" + str(self._game_board[7]['h']) + "|" +
-              str(self._game_board[7]['i']) + "|")
-        print("| 6 |" + str(self._game_board[6]['a']) + "|" + str(self._game_board[6]['b']) + "|" +
-              str(self._game_board[6]['c']) + "|" + str(self._game_board[6]['d']) + "|" +
-              str(self._game_board[6]['e']) + "|" + str(self._game_board[6]['f']) + "|" +
-              str(self._game_board[6]['g']) + "|" + str(self._game_board[6]['h']) + "|" +
-              str(self._game_board[6]['i']) + "|")
-        print("| 5 |" + str(self._game_board[5]['a']) + "|" + str(self._game_board[5]['b']) + "|" +
-              str(self._game_board[5]['c']) + "|" + str(self._game_board[5]['d']) + "|" +
-              str(self._game_board[5]['e']) + "|" + str(self._game_board[5]['f']) + "|" +
-              str(self._game_board[5]['g']) + "|" + str(self._game_board[5]['h']) + "|" +
-              str(self._game_board[5]['i']) + "|")
-        print("| 4 |" + str(self._game_board[4]['a']) + "|" + str(self._game_board[4]['b']) + "|" +
-              str(self._game_board[4]['c']) + "|" + str(self._game_board[4]['d']) + "|" +
-              str(self._game_board[4]['e']) + "|" + str(self._game_board[4]['f']) + "|" +
-              str(self._game_board[4]['g']) + "|" + str(self._game_board[4]['h']) + "|" +
-              str(self._game_board[4]['i']) + "|")
-        print("| 3 |" + str(self._game_board[3]['a']) + "|" + str(self._game_board[3]['b']) + "|" +
-              str(self._game_board[3]['c']) + "|" + str(self._game_board[3]['d']) + "|" +
-              str(self._game_board[3]['e']) + "|" + str(self._game_board[3]['f']) + "|" +
-              str(self._game_board[3]['g']) + "|" + str(self._game_board[3]['h']) + "|" +
-              str(self._game_board[3]['i']) + "|")
-        print("| 2 |" + str(self._game_board[2]['a']) + "|" + str(self._game_board[2]['b']) + "|" +
-              str(self._game_board[2]['c']) + "|" + str(self._game_board[2]['d']) + "|" +
-              str(self._game_board[2]['e']) + "|" + str(self._game_board[2]['f']) + "|" +
-              str(self._game_board[2]['g']) + "|" + str(self._game_board[2]['h']) + "|" +
-              str(self._game_board[2]['i']) + "|")
-        print("| 1 |" + str(self._game_board[1]['a']) + "|" + str(self._game_board[1]['b']) + "|" +
-              str(self._game_board[1]['c']) + "|" + str(self._game_board[1]['d']) + "|" +
-              str(self._game_board[1]['e']) + "|" + str(self._game_board[1]['f']) + "|" +
-              str(self._game_board[1]['g']) + "|" + str(self._game_board[1]['h']) + "|" +
-              str(self._game_board[1]['i']) + "|")
-        print("    ", "  a ", "  b ", "  c ", "  d ", "  e ", "  f ", "  g ", "  h ", "  i ")
-
-    def find_generals(self):
-        """
-        locates generals on game_board
-        called in see_no_evil
-        :return: list[row of black general, column of black general,
-        row of red general, column of red general]
-        """
-        pieces_to_check = [" BG ", " RG "]
-        general_locations = []
-        for row in self._game_board:
-            i = 1
-            while i <= 9:
-                if str(self._game_board[row][self.get_num_to_letter(i)]) in pieces_to_check:
-                    general_locations.append(row)
-                    general_locations.append(i)
-                i += 1
-
-        return general_locations
-
-    def get_game_state(self):
-        """
-        parameters: None
-        returns UNFINISHED, RED_WON, or BLACK_WON
-        """
-        return self._game_state
-
-    def move_pieces(self, moving_piece_row, moving_piece_col, new_row, new_col):
-        """
-        move piece to new location, and replaces the previous location of the piece with "____".
-        called in data_validation
-        :param moving_piece_row: 5
-        :param moving_piece_col: "e"
-        :param new_row: 6
-        :param new_col: "e"
-        :return: game_board[5]["e"] = "____" and game_board[6]["e"] = piece that was at e5
-        """
-
-        self._game_board[new_row][new_col] = self._game_board[moving_piece_row][moving_piece_col]
-        self._game_board[moving_piece_row][moving_piece_col] = "____"
-
-        return
-
-    def get_board_location(self, col, row):
-        """
-        TO DO
-        """
-        return str(self._game_board[row][col])
-
-    def check_for_moves_to_not_be_in_check(self, moving_piece_row, moving_piece_col, new_row, new_col, color):
-        """
-        called in in_checkmate
-        :param moving_piece_row: 5
-        :param moving_piece_col: "e"
-        :param new_row: 6
-        :param new_col: "e"
-        :param color: "black" or "red"
-        :return: True if there is a move to get out of check, otherwise returns False
-        """
-
-        storage_container = self._game_board[new_row][new_col]
-        self._game_board[new_row][new_col] = self._game_board[moving_piece_row][moving_piece_col]
-        self._game_board[moving_piece_row][moving_piece_col] = "____"
-
-        if color == "red":
-            if self.red_is_in_check():
-                self._game_board[moving_piece_row][moving_piece_col] = self._game_board[new_row][new_col]
-                self._game_board[new_row][new_col] = storage_container
-                return True
-            else:
-                self._game_board[moving_piece_row][moving_piece_col] = self._game_board[new_row][new_col]
-                self._game_board[new_row][new_col] = storage_container
-                return False
-
-        if color == "black":
-            if self.black_is_in_check():
-                self._game_board[moving_piece_row][moving_piece_col] = self._game_board[new_row][new_col]
-                self._game_board[new_row][new_col] = storage_container
-                return True
-            else:
-                self._game_board[moving_piece_row][moving_piece_col] = self._game_board[new_row][new_col]
-                self._game_board[new_row][new_col] = storage_container
-                return False
-
-    def see_no_evil(self):
-        """
-        called in data_validation
-        checks to make sure generals do not see each other
-        ;returns: True if they don't see each other, otherwise returns False
-        """
-
-        pieces_to_check = [" BG ", " RG ", "____"]
-        if self.find_generals()[1] == self.find_generals()[3]:
-            for row in self._game_board:
-                if str(self._game_board[row][self.get_num_to_letter(self.find_generals()[1])]) not in pieces_to_check:
-                    return True
-
-        return False
-
-    def possible_red_moves(self):
-        """
-        called in in_stalemate
-        :return: list((possible row, possible column), (10, 5), (etc))
-        """
-        some_list = []
-        for row in self._game_board:
-            i = 1
-            while i <= 9:
-                if "R" in str(self._game_board[row][self.get_num_to_letter(i)]):
-                    for location in \
-                            self._game_board[row][self.get_num_to_letter(i)].available_moves(row, i,
-                                                                                             self._game_board):
-                        some_list.append(location)
-                i += 1
-
-        return some_list
-
-    def possible_black_moves(self):
-        """
-        called in in_stalemate
-        :return: list((possible row, possible column), (10, 5), (etc))
-        """
-        some_list = []
-        for row in self._game_board:
-            i = 1
-            while i <= 9:
-                if "R" in str(self._game_board[row][self.get_num_to_letter(i)]):
-                    for location in \
-                            self._game_board[row][self.get_num_to_letter(i)].available_moves(row, i,
-                                                                                             self._game_board):
-                        some_list.append(location)
-                i += 1
-
-        return some_list
-
-    # def piece_location_black_check(self):
-    #     some_list = []
-    #     for row in self._game_board:
-    #         i = 1
-    #         while i <= 9:
-    #             if "R" in str(self._game_board[row][self.get_num_to_letter(i)]):
-    #                 for location in \
-    #                         self._game_board[row][self.get_num_to_letter(i)].available_moves(row, i, self._game_board):
-    #
-    #                     placeholder_list = []
-    #                     self.reverse_input(location, placeholder_list)
-    #                     if str(self._game_board[placeholder_list[0]][placeholder_list[1]]) == " BG ":
-    #                         print(self._game_board[placeholder_list[0]][placeholder_list[1]], "is in check by",
-    #                               self._game_board[row][self.get_num_to_letter(i)])
-    #                         some_list.append((row, self.get_num_to_letter(i)))
-    #
-    #                 i += 1
-    #             else:
-    #                 i += 1
-    #
-    #     return some_list
-
-    def red_is_in_check(self):
-        """
-        iterates through all black pieces on the board and checks if their available moves have the red general in it
-        called in is_in_check & in_checkmate
-        :return: True if red king in check
-        """
-
-        for row in self._game_board:
-            i = 1
-            while i <= 9:
-                if "B" in str(self._game_board[row][self.get_num_to_letter(i)]):
-                    for location in \
-                            self._game_board[row][self.get_num_to_letter(i)].available_moves(row, i, self._game_board):
-                        placeholder_list = []
-                        self.reverse_input(location, placeholder_list)
-                        if str(self._game_board[placeholder_list[0]][placeholder_list[1]]) == " RG ":
-                            print(self._game_board[placeholder_list[0]][placeholder_list[1]], "is in check by",
-                                  self._game_board[row][self.get_num_to_letter(i)])
-                            return True
-
-                    i += 1
-                else:
-                    i += 1
-
-        return False
-
-    def black_is_in_check(self):
-        """
-        iterates through all red pieces on the board and checks if their available moves have the black general in it
-        called in is_in_check & in_checkmate
-        :return: True if red king in check
-         """
-
-        for row in self._game_board:
-            i = 1
-            while i <= 9:
-                if "R" in str(self._game_board[row][self.get_num_to_letter(i)]):
-
-                    for location in \
-                            self._game_board[row][self.get_num_to_letter(i)].available_moves(row, i, self._game_board):
-
-                        placeholder_list = []
-                        self.reverse_input(location, placeholder_list)
-                        if str(self._game_board[placeholder_list[0]][placeholder_list[1]]) == " BG ":
-                            print(self._game_board[placeholder_list[0]][placeholder_list[1]], "is in check by",
-                                  self._game_board[row][self.get_num_to_letter(i)])
-                            return True
-
-                    i += 1
-                else:
-                    i += 1
-
-        return False
-
-    def is_in_check(self, color):
-        """
-        called by user
-        parameter: color red or black
-        returns: True if in check or False if not in check
-        """
-        if color == "black":
-            if self.black_is_in_check():
-                return True
-        if color == "red":
-            if self.red_is_in_check():
-                return True
-
-        return False
-
-    def in_checkmate(self, color):
-        """
-        called at end of make_move
-        :param color: "black" or "red"
-        :return: True if opposing color has no moves to get themselves out of check, otherwise returns False
-        """
-
-        if color == "black":
-            if self.red_is_in_check():
-                for row in self._game_board:
-                    i = 1
-                    while i <= 9:
-                        if "R" in str(self._game_board[row][self.get_num_to_letter(i)]):
-                            for location in \
-                                    self._game_board[row][self.get_num_to_letter(i)].available_moves(row, i,
-                                                                                                     self._game_board):
-                                placeholder_list = []
-                                self.reverse_input(location, placeholder_list)
-                                if self.check_for_moves_to_not_be_in_check(row, self.get_num_to_letter(i),
-                                                                           placeholder_list[0], placeholder_list[1],
-                                                                           "red"):
-                                    return False
-                        i += 1
-
-                self._game_state = "BLACK_WON"
-                return True
-
-        if color == "red":
-            if self.black_is_in_check():
-                for row in self._game_board:
-                    i = 1
-                    while i <= 9:
-                        if "B" in str(self._game_board[row][self.get_num_to_letter(i)]):
-                            for location in \
-                                    self._game_board[row][self.get_num_to_letter(i)].available_moves(row, i,
-                                                                                                     self._game_board):
-                                placeholder_list = []
-                                self.reverse_input(location, placeholder_list)
-                                if self.check_for_moves_to_not_be_in_check(row, self.get_num_to_letter(i),
-                                                                           placeholder_list[0], placeholder_list[1],
-                                                                           "black"):
-                                    return False
-                        i += 1
-
-                print("game state change")
-                self._game_state = "RED_WON"
-                return True
-
-    def in_stalemate(self, color):
-        """
-        called at end of make_move
-        :param color: "black" or "red"
-        :return: True if opposite color has no more moves, False if moves available
-        """
-
-        if color == "black":
-            possible_red_moves = self.possible_red_moves()
-            if len(possible_red_moves) == 0:
-                return True
-
-        if color == "red":
-            possible_black_moves = self.possible_black_moves()
-
-            if len(possible_black_moves) == 0:
-                return True
-
-        return False
-
-    def parse_input(self, some_input, some_list):
-        """
-        called in make_move
-        :param some_input: a10
-        :param some_list: an empty list to append input to
-        :return: some_list['a', 10]
-        """
-
-        for el in some_input:
-            some_list.append(el)
-
-        if len(some_input) == 3:
-            some_list[1] = str(some_list[1]) + str(some_list[2])
-            some_list.pop(2)
-
-        some_list[1] = int(some_list[1])
-
-        return some_list
-
-    def reverse_input(self, two_numbers, placeholder_list):
-        """
-        called in red_is_in_check, black_is_in_check, & in_checkmate
-        :param two_numbers: EX (9, 1)
-        :param placeholder_list: empty list to append the numbers to
-        :return: placeholder_list[9, 'a']
-        """
-        i = 0
-        for el in two_numbers:
+            # Row 1
             if i == 0:
-                placeholder_list.append(el)
-                i += 1
+                for ii in range(len(self._game_board[i])):
+                    if ii == 0 or ii == 8:
+                        self._game_board[i][ii] = Chariot("black", "BCHA")
+                        self._game_board[i][ii].update_location([i, ii])
+                    if ii == 1 or ii == 7:
+                        self._game_board[i][ii] = Horse("black", " BH ")
+                        self._game_board[i][ii].update_location([i, ii])
+                    if ii == 2 or ii == 6:
+                        self._game_board[i][ii] = Elephant("black", " BE ")
+                        self._game_board[i][ii].update_location([i, ii])
+                    if ii == 3 or ii == 5:
+                        self._game_board[i][ii] = Advisor("black", " BA ")
+                        self._game_board[i][ii].update_location([i, ii])
+                    if ii == 4:
+                        self._game_board[i][ii] = General("black", " BG ")
+                        self._game_board[i][ii].update_location([i, ii])
+            
+            # Row 3
+            if i == 2:
+                for ii in range(len(self._game_board[i])):
+                    if ii == 1 or ii == 7:
+                        self._game_board[i][ii] = Cannon("black", "BCAN")
+                        self._game_board[i][ii].update_location([i, ii])
+
+            # Row 4
+            if i == 3:
+                for ii in range(len(self._game_board[i])):
+                    if ii % 2 == 0:
+                        self._game_board[i][ii] = Soldier("black", "BSOL")
+                        self._game_board[i][ii].update_location([i, ii])
+
+            # Row 7
+            if i == 6:
+                for ii in range(len(self._game_board[i])):
+                    if ii % 2 == 0:
+                        self._game_board[i][ii] = Soldier("red", "RSOL")
+                        self._game_board[i][ii].update_location([i, ii])
+            
+            # Row 8
+            if i == 7:
+                for ii in range(len(self._game_board[i])):
+                    if ii == 1 or ii == 7:
+                        self._game_board[i][ii] = Cannon("red", "RCAN")
+                        self._game_board[i][ii].update_location([i, ii])
+
+            # Row 10
+            if i == 9:
+                for ii in range(len(self._game_board[i])):
+                    if ii == 0 or ii == 8:
+                        self._game_board[i][ii] = Chariot("red", "RCHA")
+                        self._game_board[i][ii].update_location([i, ii])
+                    if ii == 1 or ii == 7:
+                        self._game_board[i][ii] = Horse("red", " RH ")
+                        self._game_board[i][ii].update_location([i, ii])
+                    if ii == 2 or ii == 6:
+                        self._game_board[i][ii] = Elephant("red", " RE ")
+                        self._game_board[i][ii].update_location([i, ii])
+                    if ii == 3 or ii == 5:
+                        self._game_board[i][ii] = Advisor("red", " RA ")
+                        self._game_board[i][ii].update_location([i, ii])
+                    if ii == 4:
+                        self._game_board[i][ii] = General("red", " RG ")
+                        self._game_board[i][ii].update_location([i, ii])
+
+    def printBoardWithStyling(self):
+        rowNum = 10
+        colLetter = ["  a", "  b", "  c", "  d", "  e", "  f", "  g", "  h", "  i"]
+        for row in self._game_board:
+            temp = []
+            for el in row:
+                if el != "____":
+                    temp.append(el._name)
+                else:
+                    temp.append(el)
+        
+            if rowNum == 10:
+                print(rowNum, " ", '|'.join(temp[0:]))
             else:
-                placeholder_list.append(str(self.get_num_to_letter(el)))
+                print(rowNum, "  ", '|'.join(temp[0:]))
+            rowNum -= 1
+        print("    ", '  '.join(colLetter[0:]))
+        print('\n')
 
-        return placeholder_list
-    
-    def make_readable_data(self, possible_moves):
-        """
-        TO DO
-        """
-        newlist=[]
-        for el in possible_moves:
-            temp = [el[1],el[0]]
-            temp[0] = self._num_to_letter[temp[0]]
-            temp[1] = str(temp[1])
-            temp = ''.join(temp[0:2])
-            newlist.append(temp)
-
-        newlist = ", ".join(newlist[0:])
-
-        return newlist
-
-    def data_validation(self, starting_row, starting_column, ending_row, ending_column, ending_loc):
-        """
-        called in make_move
-        checks input in make_move for the following:
-            within range of board 
-            piece is at starting location 
-            proper players turn
-            proposed move is a legal move 
-            game hasn't been won 
-            won't cause the players king to be in check
-            the kings can't see each other after move
-        If any come back false, returns the proper message to display which error.
-        :param starting_row: 3
-        :param starting_column: "b"
-        :param ending_row: 10
-        :param ending_column: "b"
-        :param ending_loc: (10, 2)
-        :return: True if all checks are passed otherwise error message
-        """
-
-        # input within range of board
-        if ending_row not in range(1, 11) or ending_column not in self._letters_to_num or \
-                starting_row not in range(1, 11) or starting_column not in self._letters_to_num:
-            print("Input not on board. Valid row range = 1 - 10. Valid column range = a - i")
-            return False
-
-        # there is piece at starting location
-        if self._game_board[starting_row][starting_column] == str(self._game_board[starting_row][starting_column]):
-            print("No valid piece at location " + str(starting_column) + str(starting_row))
-            return False
-
-        # turn order
-        if self._game_board[starting_row][starting_column].get_color() != self._player_turn:
-            print("It's " + str(self._player_turn) + "s turn")
-            return False
-
-        # place to move to is in available moves for selected piece
-        if ending_loc not in self._game_board[starting_row][starting_column].available_moves(starting_row,
-                                                                                             self.get_letters_to_num(
-                                                                                                 starting_column),
-                                                                                             self._game_board):
-            print("\nThat move is not available to " + str(self._game_board[starting_row][starting_column]))
-            readableData = self._game_board[starting_row][starting_column].available_moves(starting_row,
-                                                                                             self.get_letters_to_num(
-                                                                                                 starting_column),
-                                                                                             self._game_board)
-            PossibleMovesReadable = self.make_readable_data(readableData);     
-            print("The available moves are", PossibleMovesReadable)
-            return False
-
-        # game state
-        if self._game_state != "UNFINISHED":
-            print("The game is over, no more valid moves")
-            return False
-
-        # moves piece for other tests
-        self.move_pieces(starting_row, starting_column, ending_row, ending_column)
-
-        # puts your king in check - red
-        if self._game_board[ending_row][ending_column].get_color() == "red":
-            if self.red_is_in_check():
-                self.move_pieces(ending_row, ending_column, starting_row, starting_column)
-                print("This move would put/leave your general in check")
-                return False
-
-        # put your king in check - black
-        if self._game_board[ending_row][ending_column].get_color() == "black":
-            if self.black_is_in_check():
-                self.move_pieces(ending_row, ending_column, starting_row, starting_column)
-                print("This move would put/leave your general in check")
-                return False
-
-        # kings see each other
-        if not self.see_no_evil():
-            self.move_pieces(ending_row, ending_column, starting_row, starting_column)
-            print("The generals can't see each other. There must be a piece between them when in the same column")
-            return False
-
-        return True
+    def printStartMsg(self):
+        print("\nSTARING THE GAME")
+        print("HAVE FUN!\n")
 
     def make_move(self, starting_pos, ending_pos):
-        """
-        called by user
-        displays msg explaining how input is wrong via data_validation if input is invalid,
-        otherwise moves the piece and sets up for the next turn unless it's the winning move where the game is stopped
-        :parameter: (square moved from, square to move to) example: e1, e2
-        :returns: True if piece moved successfully or False along with message if piece didn't move
-        """
-        # print("MAKING MOVE \nFrom:", starting_pos,"\nTo:", ending_pos)
 
-        # separate inputs into workable list indices
-        starting_loc = []
-        self.parse_input(starting_pos, starting_loc)
+        print("make_move, input =", starting_pos, ending_pos)
+        
+        # convert inputs to work with table
+        starting_loc = self.parse_input(starting_pos)
+        ending_loc = self.parse_input(ending_pos)
 
-        ending_loc = []
-        self.parse_input(ending_pos, ending_loc)
-        ending_loc.append((ending_loc[1], self.get_letters_to_num(ending_loc[0])))
+        # conditionals to check 
+        valid = (starting_loc[0] is not False and ending_loc[0] is not False)
+        invalid = starting_loc[0] is False or ending_loc[0] is False
 
-        # validate the data, if true moves the piece.
-        if self.data_validation(starting_loc[1], starting_loc[0], ending_loc[1], ending_loc[0], ending_loc[2]):
+        # check if piece is at starting_loc
+        self.validate_move_check_for_piece(starting_loc)
 
-            self.set_player_turn()
-            self.print_board()
-            if self.in_stalemate(self._game_board[ending_loc[1]][ending_loc[0]].get_color()) or \
-                    self.in_checkmate(self._game_board[ending_loc[1]][ending_loc[0]].get_color()):
-                print("game over")
-            return True
-        else:
+        if valid:
+            self.validate_move_game_conditions(starting_loc, ending_loc)
+
+        # if still valid, check conditions involving the generals
+        if valid:
+            # TO DO - Move will put king in own king check
+            pass
+
+        # ensure move is valid to move on
+        if starting_loc[0] is False or ending_loc[0] is False:
             return False
 
-    def get_letters_to_num(self, letter_in_need_of_converting):
-        """
-        called in make_move, data_validation,
-        turns letters into numbers that correspond to the game board
-        :param letter_in_need_of_converting: "a"
-        :return: 1
-        """
-        return self._letters_to_num[letter_in_need_of_converting]
+        # move piece
+        self.move_pieces(starting_loc, ending_loc)
+        self._game_board[ending_loc[0]][ending_loc[1]].update_location(ending_loc)
 
-    def get_num_to_letter(self, number_in_need_of_converting):
-        """
-        called in reverse_input, in_checkmate, red_is_in_check, black_is_in_check, possible_black_moves,
-        possible_red_moves, see_no_evil, & find_generals
-        turns numbers into letters that correspond to the game board
-        :param number_in_need_of_converting:
-        :return:
-        """
-        return self._num_to_letter[number_in_need_of_converting]
+        # TO DO - check if game has been won
 
-    def get_game_board(self):
-        return self._game_board
+        self.set_player_turn()
+        self.printBoardWithStyling()
+        return True
+
+    def move_pieces(self, starting_loc, ending_loc):
+        """       
+        """  
+  
+        self._game_board[ending_loc[0]][ending_loc[1]] = \
+            self._game_board[starting_loc[0]][starting_loc[1]]
+        self._game_board[starting_loc[0]][starting_loc[1]] = "____"
+
+    def parse_input(self, some_input):
+
+        temp = []
+        temp2 = []
+
+        # breaks apart input
+        for el in some_input:
+            temp.append(el)
+
+        if len(some_input) == 3:
+            temp[1] = str(temp[1] + str(temp[2]))
+            temp.pop()
+        
+        temp[1] = int(temp[1])
+
+        # Checks boundries and input type before conversion
+        dataValidation = [self.validate_move_input_and_bounderies(temp)]
+        if False in dataValidation:
+            print("Try Again")
+            return False
+
+        temp2.append(self._row_conversion[temp[1]])
+        temp2.append(self._col_conversion[temp[0]])
+
+        return temp2
+
+    def reverse_parse_input(self, some_input):
+
+        temp = []
+
+        # print("reverse_parse_input")
+        # print(some_input)
+
+        temp.append(self._col_conversion[some_input[1]])
+        temp.append(str(self._row_conversion[some_input[0]]))
+
+        output = ''.join(temp[:])
+        return output
 
     def set_player_turn(self):
         if self._player_turn == "red":
@@ -596,454 +227,710 @@ class XiangqiGame:
         else:
             self._player_turn = "red"
 
-    def set_pieces(self):
+    def validate_move_input_and_bounderies(self, board_loc):
         """
-        Places pieces in their starting position intializing them as classes of Piece
-        :parameter: None
-        :return: None
         """
-        pawn_placement = ["a", "c", "e", "g", "i"]
-        chariot_placement = ["a", "i"]
-        horse_cannon_placement = ["b", "h"]
-        advisor_placement = ["d", "f"]
-        elephant_placement = ["c", "g"]
-        general_placement = ["e"]
+        invalidRow = "is not a valid row"
+        invalidCol = "is not a valid column"
 
-        # place soldiers
-        for key in self._game_board:
-            if key == 4:
-                for el in self._game_board[key]:
-                    if el in pawn_placement:
-                        self._game_board[key][el] = \
-                            Solider("red", self._unit_dictionary["red"][Solider])
-            if key == 7:
-                for el in self._game_board[key]:
-                    if el in pawn_placement:
-                        self._game_board[key][el] = \
-                            Solider("black", self._unit_dictionary["black"][Solider])
-            # place starting row
-            if key == 1:
-                for el in self._game_board[key]:
-                    if el in chariot_placement:
-                        self._game_board[key][el] = \
-                            Chariot("red", self._unit_dictionary["red"][Chariot])
-                    if el in horse_cannon_placement:
-                        self._game_board[key][el] = \
-                            Horse("red", self._unit_dictionary["red"][Horse])
-                    if el in elephant_placement:
-                        self._game_board[key][el] = \
-                            Elephant("red", self._unit_dictionary["red"][Elephant])
-                    if el in advisor_placement:
-                        self._game_board[key][el] = \
-                            Advisor("red", self._unit_dictionary["red"][Advisor])
-                    if el in general_placement:
-                        self._game_board[key][el] = \
-                            General("red", self._unit_dictionary["red"][General])
-            if key == 10:
-                for el in self._game_board[key]:
-                    if el in chariot_placement:
-                        self._game_board[key][el] = \
-                            Chariot("black", self._unit_dictionary["black"][Chariot])
-                    if el in horse_cannon_placement:
-                        self._game_board[key][el] = \
-                            Horse("black", self._unit_dictionary["black"][Horse])
-                    if el in elephant_placement:
-                        self._game_board[key][el] = \
-                            Elephant("black", self._unit_dictionary["black"][Elephant])
-                    if el in advisor_placement:
-                        self._game_board[key][el] = \
-                            Advisor("black", self._unit_dictionary["black"][Advisor])
-                    if el in general_placement:
-                        self._game_board[key][el] = \
-                            General("black", self._unit_dictionary["black"][General])
-            # place cannons
-            if key == 3:
-                for el in self._game_board[key]:
-                    if el in horse_cannon_placement:
-                        self._game_board[key][el] = \
-                            Cannon("red", self._unit_dictionary["red"][Cannon])
-            if key == 8:
-                for el in self._game_board[key]:
-                    if el in horse_cannon_placement:
-                        self._game_board[key][el] = \
-                            Cannon("black", self._unit_dictionary["black"][Cannon])
+        possibleCols = ["a", "b", "c", "d", "e", "f", "g", "h", "i"]
+        possibleRows = list(range(1, 11))
 
+        count = 0
+        
+        if board_loc[0] not in possibleCols:
+            print(board_loc[0], invalidCol)
+            count += 1
 
-class Piece:
-
-    def __init__(self, color, name):
-        self._color = color
-        self._name = name
-        self._num_to_letters = {1: "a",
-                                2: "b",
-                                3: "c",
-                                4: "d",
-                                5: "e",
-                                6: "f",
-                                7: "g",
-                                8: "h",
-                                9: "i"}
-
-    def __str__(self):
-        return self._name
-
-    def get_num_to_letters(self, number_in_need_of_converting):
-        return self._num_to_letters[number_in_need_of_converting]
-
-    def available_moves(self, starting_row, starting_column, game_board):
-        print("Error")
-
-    def is_in_bounds(self, proposed_ending_row, proposed_ending_column):
-        """
-        :parameter: self, square moving from and square moving to
-        :returns: True if move is on game board, False if off game board
-        """
-
-        if proposed_ending_column > 9 or proposed_ending_column < 1 \
-                or proposed_ending_row < 1 or proposed_ending_row > 10:
+        if board_loc[1] not in possibleRows:
+            print(board_loc[1], invalidRow)
+            count += 1
+      
+        if count > 0:
             return False
         else:
             return True
 
-    def get_color(self):
-        return self._color
+    def validate_move_game_conditions(self, starting_loc, ending_loc):
 
-    def get_name(self):
+        count_start = 0
+        count_end = 0
+        # Proper players turn
+        if self._game_board[starting_loc[0]][starting_loc[1]]._color \
+                != self._player_turn:
+
+            count_start += 1
+            print("It's", self._player_turn + "'s turn. Invalid move")
+
+        # Game hasn't been won
+        if self._game_state != "UNFINISHED":
+
+            count_start += 1
+            count_end += 1
+            print("The game is over.", self._game_state)
+
+        # Proposed ending location is an avaiable move
+        if (ending_loc[0], ending_loc[1]) not in self._game_board[starting_loc[0]][starting_loc[1]].avialable_moves(self._game_board):
+
+            possible_moves = []
+            for el in self._game_board[starting_loc[0]][starting_loc[1]].avialable_moves(self._game_board):
+                possible_moves.append(self.reverse_parse_input(el))
+
+            og_ending_loc = self.reverse_parse_input(ending_loc)
+            print("The move to", og_ending_loc, "is not avaiable to", self._game_board[starting_loc[0]][starting_loc[1]])
+            print("Your available moves are: ", ', '.join(possible_moves[:]))
+
+            count_end += 1
+  
+        if count_start > 0:
+            starting_loc[0] = False
+            starting_loc.pop()
+        if count_end > 0:
+            ending_loc[0] = False
+            ending_loc.pop()
+
+    def validate_move_check_for_piece(self, starting_loc):
+        """
+        """
+        if self._game_board[starting_loc[0]][starting_loc[1]] == "____":
+            print("No piece at starting location")
+            starting_loc[0] = False
+            starting_loc.pop()
+
+
+class Pieces:
+    def __init__(self, color, name):
+        self._color = color
+        self._name = name
+        self._col = 0
+        self._row = 0
+        self._ops = {
+                "+": operator.add,
+                "-": operator.sub,
+                "*": operator.mul,
+                "<": operator.lt,
+                ">": operator.gt,
+                ">=": operator.ge,
+                "<=": operator.le
+                }
+
+    def __str__(self):
         return self._name
 
-    def no_conflict(self, color, starting_row, starting_column, game_board):
+    def is_in_bounds(self, proposed_ending_row, proposed_ending_column):
+        column_check = proposed_ending_column > 8 or proposed_ending_column < 0
+        row_check = proposed_ending_row < 0 or proposed_ending_row > 9
+        in_bounds = False if column_check or row_check else True
+        
+        return in_bounds
+            
+    def update_location(self, new_loc):
+        self._col = new_loc[1]
+        self._row = new_loc[0]
 
-        if self.is_in_bounds(starting_row, starting_column):
-            if self._name == "RCAN" or self._name == "BCAN":
-                if game_board[starting_row][self.get_num_to_letters(starting_column)] != "____":
-                    return False
-                else:
-                    return True
-            if game_board[starting_row][self.get_num_to_letters(starting_column)] != \
-                    str(game_board[starting_row][self.get_num_to_letters(starting_column)]):
-                if game_board[starting_row][self.get_num_to_letters(starting_column)].get_color() != color:
-                    return True
-                else:
-                    return False
-            else:
-                return True
+    def get_general_location(self, color, game_board):
+        piece_color = color == "red"
+        name = " RG " if color else " BG "
+
+        for el in game_board:
+            if name in el:
+                for space in el:
+                    location = game_board[el][space]
+                    if location == name:
+                        return (location._row, location._col)
+
+        return (11, 11)
+
+    def no_conflict(self, game_board, proposed_end_row, proposed_end_col):
+
+        count = 0
+
+        # check if not in bounds
+        if not self.is_in_bounds(proposed_end_row, proposed_end_col):
+            count += 1
+
         else:
-            return False
+            location = game_board[proposed_end_row][proposed_end_col]
+            # if in bounds, check if space is not empty
+            if location != "____":
+                # then check if space if occupied by a piece of the same color
+                if location._color == self._color:
+                    count += 1
 
-    def no_conflict_horse(self, starting_row, starting_column, game_board):
-        """
-        called in available_moves for Horse
-        :param starting_row: 10
-        :param starting_column: 2
-        :param game_board: self._game_board
-        :return: True if valid location to move
-        """
-        if self.is_in_bounds(starting_row, starting_column):
-            if str(game_board[starting_row][self.get_num_to_letters(starting_column)]) == "____":
-                return True
-            else:
-                return False
+        # check for flying king
+        if not self.see_no_evil(game_board, proposed_end_row, proposed_end_col):
+            count += 1
+
+        if count > 0:
+            return False
         else:
-            return False
+            return True
 
-    def non_horizontal_moves_list(self, starting_row, starting_column):
-        return [(starting_row + 1, starting_column), (starting_row, starting_column + 1),
-                (starting_row - 1, starting_column), (starting_row, starting_column - 1)]
+    def see_no_evil(self, game_board, proposed_end_row, proposed_end_col):
+  
+        # get gen locations
+        RG_location = self.get_general_location("red", game_board)
+        BG_location = self.get_general_location("black", game_board)
 
-    def horizontal_moves_list(self, starting_row, starting_column):
-        return [(starting_row - 1, starting_column + 1), (starting_row - 1, starting_column - 1),
-                (starting_row + 1, starting_column - 1), (starting_row + 1, starting_column + 1)]
+        general_piece = self._name == " RG " or self._name == " BG "
+        general_in_same_col = RG_location[1] == BG_location[1]
+        same_col_as_gen = self._col == RG_location[1]
+        count = self.count_other_pieces_in_col(game_board, self._col)
+        is_red_gen = self._name == " RG "
+        opposing_gen = BG_location if is_red_gen else RG_location
+        count = self.count_other_pieces_in_col(game_board, proposed_end_col)
+    
+        # Check if non general pieces moving out of col
+        # and generals in the same col
+        if general_in_same_col:
+            if not general_piece:
+                # check if piece is in that col or gen will be in the same col
+                if same_col_as_gen:
+                    # check if col has another piece to seperate the gens
+                    if count < 3:
+                        return False
 
-    def in_palace(self, proposed_ending_row, proposed_ending_column, color):
-        if color == "red":
-            if proposed_ending_column > 6 or proposed_ending_column < 4 or proposed_ending_row > 3:
-                return False
-            else:
-                return True
-        if color == "black":
-            if proposed_ending_column > 6 or proposed_ending_column < 4 or proposed_ending_row < 6:
-                return False
-            else:
-                return True
+        # check if general is moving into column
+        # with other gen and no other pieces
+        if general_piece:
+            # then determine if proposed_ending_column is == to other gen col
+            if proposed_end_col == opposing_gen[1]:
+                # if yes, then count number of pieces in col
+                if count < 2:
+                    return False 
 
-    def no_river_crossing(self, proposed_ending_row, color):
+        return True
 
-        if color == "red":
-            if proposed_ending_row > 5:
-                return False
-            else:
-                return True
-        if color == "black":
-            if proposed_ending_row < 6:
-                return False
-            else:
-                return True
+    def count_other_pieces_in_col(self, game_board, col):
+        for i in range(0, 10):
+            count = 0
+        if game_board[i][col] != "____" and game_board[i][col] != self._name:
+            count += 1
 
-    def cannon_jump(self, direction, color, starting_row, starting_column, game_board, possible_moves):
-        while self.is_in_bounds(starting_row, starting_column):
-            if direction == "up":
-                if game_board[starting_row][self.get_num_to_letters(starting_column)] != \
-                        str(game_board[starting_row][self.get_num_to_letters(starting_column)]):
-                    if game_board[starting_row][self.get_num_to_letters(starting_column)].get_color() != color:
-                        return possible_moves.append((starting_row, starting_column))
-                    else:
-                        starting_row += 1
-                else:
-                    starting_row += 1
-
-            if direction == "down":
-                # print("the direction is down")
-                if game_board[starting_row][self.get_num_to_letters(starting_column)] != \
-                        str(game_board[starting_row][self.get_num_to_letters(starting_column)]):
-                    if game_board[starting_row][self.get_num_to_letters(starting_column)].get_color() != color:
-                        # print("down", starting_row, starting_column)
-                        return possible_moves.append((starting_row, starting_column))
-                    else:
-                        starting_row -= 1
-                else:
-                    starting_row -= 1
-
-            if direction == "left":
-                # print("the direction is left")
-                if game_board[starting_row][self.get_num_to_letters(starting_column)] != \
-                        str(game_board[starting_row][self.get_num_to_letters(starting_column)]):
-                    if game_board[starting_row][self.get_num_to_letters(starting_column)].get_color() != color:
-                        # print("left", starting_row, starting_column)
-                        return possible_moves.append((starting_row, starting_column))
-                    else:
-                        starting_column -= 1
-                else:
-                    starting_column -= 1
-
-            if direction == "right":
-                # print("the direction is right")
-                if game_board[starting_row][self.get_num_to_letters(starting_column)] != \
-                        str(game_board[starting_row][self.get_num_to_letters(starting_column)]):
-                    if game_board[starting_row][self.get_num_to_letters(starting_column)].get_color() != color:
-                        # print("right", starting_row, starting_column)
-                        return possible_moves.append((starting_row, starting_column))
-                    else:
-                        starting_column += 1
-                else:
-                    starting_column += 1
-
-        return possible_moves
-
-    def solider_move_list(self, starting_row, starting_column, color):
-        if color == "red":
-            if starting_row > 5:
-                return [(starting_row + 1, starting_column), (starting_row, starting_column + 1),
-                        (starting_row, starting_column - 1)]
-            else:
-                return [(starting_row + 1, starting_column)]
-
-        if color == "black":
-            if starting_row < 6:
-                return [(starting_row - 1, starting_column), (starting_row, starting_column + 1),
-                        (starting_row, starting_column - 1)]
-            else:
-                return [(starting_row - 1, starting_column)]
+        return count
 
 
-class General(Piece):
-    """
-    the general can only move horizontally or vertically and must stay in the palace
-    """
-    def available_moves(self, starting_row, starting_column, game_board):
-        possible_moves = [(starting_row, starting_column) for starting_row, starting_column in
-                          self.non_horizontal_moves_list(starting_row, starting_column)
-                          if self.no_conflict(self._color, starting_row, starting_column, game_board) and
-                          self.in_palace(starting_row, starting_column, self._color)]
+class Soldier(Pieces):
 
-        return possible_moves
+    def __init__(self, color, name):
+        # Fun thing to write article about
+        super(Soldier, self).__init__(color, name)
+        self._river = self.get_river()
+        self._moveForward = self.get_moveForward()
+        self._moveBackward = self.get_moveBackward()
+        self._compare = self.get_compare()
 
+    def get_river(self):
+        color_is_black = self._color == "black"
+        river = 6 if color_is_black else 5
+        return river
 
-class Advisor(Piece):
-    """
-    the advisor can only move diagonally and must stay in the palace
-    """
+    def get_moveForward(self):
+        if self._color == "black":
+            return self._ops["+"]
+        else:
+            return self._ops["-"]
 
-    def available_moves(self, starting_row, starting_column, game_board):
-        possible_moves = [(starting_row, starting_column) for starting_row, starting_column in
-                          self.horizontal_moves_list(starting_row, starting_column)
-                          if self.no_conflict(self._color, starting_row, starting_column, game_board) and
-                          self.in_palace(starting_row, starting_column, self._color)]
+    def get_moveBackward(self):
+        if self._color == "black":
+            return self._ops["-"]
+        else:
+            return self._ops["+"]
 
-        return possible_moves
+    def get_compare(self):
+        if self._color == "black":
+            return self._ops[">"]
+        else:
+            return self._ops["<"]
 
+     def capture(self, proposed_row, proposed_column):
+         return True
 
-class Elephant(Piece):
-    """
-    Elephants can move exactly two spaces diagonally and they cannot cross the river
-    (only 7 available moves)
-    """
+    def solider_move_list(self):
 
-    def available_moves(self, starting_row, starting_column, game_board):
+        forward = (self._moveForward(self._row,1), self._col)
+        left = (self._row, self._col - 1)
+        backward = (self._row, self._moveBackward(self._col, 1))
 
-        possible_moves = []
-        # -, -
-        i = 1
-        if self.no_conflict(self._color, starting_row - i, starting_column - i, game_board) \
-                and self.no_river_crossing(starting_row - i, self._color):
-            i += 1
-            if self.no_conflict(self._color, starting_row - i, starting_column - i, game_board) \
-                    and self.no_river_crossing(starting_row - i, self._color):
-                possible_moves.append((starting_row - i, starting_column - i))
-        # +, -
-        i = 1
-        if self.no_conflict(self._color, starting_row + i, starting_column - i, game_board) \
-                and self.no_river_crossing(starting_row + i, self._color):
-            i += 1
-            if self.no_conflict(self._color, starting_row + i, starting_column - i, game_board) \
-                    and self.no_river_crossing(starting_row + i, self._color):
-                possible_moves.append((starting_row + i, starting_column - i))
-        # -, +
-        i = 1
-        if self.no_conflict(self._color, starting_row - i, starting_column + i, game_board) \
-                and self.no_river_crossing(starting_row - i, self._color):
-            i += 1
-            if self.no_conflict(self._color, starting_row - i, starting_column + i, game_board) \
-                    and self.no_river_crossing(starting_row - i, self._color):
-                possible_moves.append((starting_row - i, starting_column + i))
-        # +, +
-        i = 1
-        if self.no_conflict(self._color, starting_row + i, starting_column + i, game_board) \
-                and self.no_river_crossing(starting_row + i, self._color):
-            i += 1
-            if self.no_conflict(self._color, starting_row + i, starting_column + i, game_board) \
-                    and self.no_river_crossing(starting_row + i, self._color):
-                possible_moves.append((starting_row + i, starting_column + i))
-
-        return possible_moves
+        # check if piece has passed the river
+        if self._compare(self._row, self._river):  
+            return [forward, left, backward]
+        else:
+            return [forward]
 
 
-class Horse(Piece):
-    """
-    Moves one space horizontally or vertically then can move on space diagonally in that same direction
-    """
+  def avialable_moves(self, game_board):
 
-    def available_moves(self, starting_row, starting_column, game_board):
+    possible_moves = [(starting_row, starting_column) for starting_row, starting_column in self.solider_move_list() if self.no_conflict(game_board, starting_row, starting_column)]
 
-        possible_moves = []
-        # down
-        i = 1
-        if self.no_conflict_horse(starting_row - i, starting_column, game_board):
-            i += 1
-            if self.no_conflict(self._color, starting_row - i, starting_column + 1, game_board):
-                possible_moves.append((starting_row - i, starting_column + 1))
-            if self.no_conflict(self._color, starting_row - i, starting_column - 1, game_board):
-                possible_moves.append((starting_row - i, starting_column - 1))
-        # up
-        i = 1
-        if self.no_conflict_horse(starting_row + i, starting_column, game_board):
-            i += 1
-            if self.no_conflict(self._color, starting_row + i, starting_column + 1, game_board):
-                possible_moves.append((starting_row + i, starting_column + 1))
-            if self.no_conflict(self._color, starting_row + i, starting_column - 1, game_board):
-                possible_moves.append((starting_row + i, starting_column - 1))
-        # right
-        i = 1
-        if self.no_conflict_horse(starting_row, starting_column + i, game_board):
-            i += 1
-            if self.no_conflict(self._color, starting_row - 1, starting_column + i, game_board):
-                possible_moves.append((starting_row - 1, starting_column + i))
-            if self.no_conflict(self._color, starting_row + 1, starting_column + i, game_board):
-                possible_moves.append((starting_row + 1, starting_column + i))
-        # left
-        i = 1
-        if self.no_conflict_horse(starting_row, starting_column - i, game_board):
-            i += 1
-            if self.no_conflict(self._color, starting_row - 1, starting_column - i, game_board):
-                possible_moves.append((starting_row - 1, starting_column + i))
-            if self.no_conflict(self._color, starting_row + 1, starting_column - i, game_board):
-                possible_moves.append((starting_row + 1, starting_column - i))
+    return possible_moves
+
+class General(Pieces):
+
+    def __init__(self, color, name):
+        # Fun thing to write article about
+        super(General, self).__init__(color, name)
+        self._moveForward = self.get_moveForward()
+        self._moveBackward = self.get_moveBackward()
+        self._compareForward = self.get_compareForward()
+        self._palace_col_left_boundry = 3
+        self._palace_col_right_boundry = 5
+        self._palace_boundry = self.get_palace_boundry()
+
+    def get_moveForward(self):
+        if self._color == "black":
+            return self._ops["+"]
+        else:
+            return self._ops["-"]
+
+    def get_moveBackward(self):
+        if self._color == "red":
+            return self._ops["+"]
+        else:
+            return self._ops["-"]
+
+    def get_palace_boundry(self):
+        if self._color == "red":
+            return 7
+        else:
+            return 2
+
+    def get_compareForward(self):
+        if self._color == "red":
+            return self._ops[">"]
+        else:
+            return self._ops["<"]
+  
+    def capture(self, proposed_row, proposed_column):
+        """
+        
+        """
+        return True
+
+    def general_move_list(self):
+      
+        moves = []
+        forward_move_in_palace = self._compareForward(self._moveForward(self._row, 1), self._palace_row_boundry)
+        forward = (self._moveForward(self._row, 1), self._col)
+        # move foward 
+        if forward_move_in_palace:
+            moves.append(forward)
+      
+        # move left 
+        if self._col - 1 >= self._palace_col_left_boundry:
+            moves.append((self._row, self._col -1))
+
+        # move right
+        if self._col + 1 <= self._palace_col_right_boundry:
+            moves.append((self._row, self._col + 1))
+
+        # move backward - no need to check, no_conflict checks for offboard moves
+        moves.append((self._moveBackward(self._row, 1), self._col))
+
+        return moves
+
+    def avialable_moves(self, game_board):
+
+        possible_moves = [(starting_row, starting_column) for starting_row, starting_column in self.general_move_list() if self.no_conflict(game_board, starting_row, starting_column)]
 
         return possible_moves
 
+class Advisor(Pieces):
+    # HERE
+  def __init__(self, color, name):
+    # Fun thing to write article about
+    super(Advisor, self).__init__(color, name)
+    self._moveForward = self.get_moveForward()
+    self._moveBackward = self.get_moveBackward()
+    self._compareForward = self.get_compareForward()
+    self._palace_col_left_boundry = 3
+    self._palace_col_right_boundry = 5
+    self._palace_row_boundry = self.get_palace_boundry()
 
-class Chariot(Piece):
+  def get_moveForward(self):
+    if self._color == "black":
+      return self._ops["+"]
+    else:
+      return self._ops["-"]
+
+  def get_moveBackward(self):
+    if self._color == "red":
+      return self._ops["+"]
+    else:
+      return self._ops["-"]
+
+  def get_palace_boundry(self):
+    if self._color == "red":
+      return 7
+    else:
+      return 2
+
+  def get_compareForward(self):
+    if self._color == "red":
+      return self._ops[">"]
+    else:
+      return self._ops["<"]
+
+  def capture(self, proposed_row, proposed_column):
+    return True
+
+  def advisor_move_list(self):
+    moves = []
+
+    # move foward left 
+    if self._compareForward(self._moveForward(self._row, 1), self._palace_row_boundry) and \
+    self._col -1 >= self._palace_col_left_boundry:
+      moves.append((self._moveForward(self._row, 1), (self._col - 1)))
+
+    # move forward right 
+    if self._compareForward(self._moveForward(self._row, 1), self._palace_row_boundry) and \
+    self._col + 1 <= self._palace_col_right_boundry:
+      moves.append((self._moveForward(self._row, 1), self._col + 1))
+
+    # move backwards right
+    if self._col + 1 >= self._palace_col_right_boundry:
+      moves.append((self._moveBackward(self._row, 1), self._col + 1))
+
+    # move backward - no need to check, no_conflict checks for offboard moves
+    if self._col - 1 >= self._palace_col_left_boundry:
+      moves.append((self._moveBackward(self._row, 1), self._col - 1))
+
+    return moves
+
+  def avialable_moves(self, game_board):
+
+    possible_moves = [(starting_row, starting_column) for starting_row, starting_column in self.advisor_move_list() if self.no_conflict(game_board, starting_row, starting_column)]
+
+    return possible_moves
+
+class Elephant(Pieces):
+
+  def __init__(self, color, name):
+    # Fun thing to write article about
+    super(Elephant, self).__init__(color, name)
+    self._river = self.get_river()
+    self._moveForward = self.get_moveForward()
+    self._moveBackward = self.get_moveBackward()
+    self._compare = self.get_compare()
+
+  def get_river(self):
+    if self._color == 'black':
+      return 5
+    else: 
+      return 4
+
+  def get_moveForward(self):
+    if self._color == 'black':
+      return self._ops["+"]
+    else:
+      return self._ops["-"]
+
+  def get_moveBackward(self):
+    if self._color == 'black':
+      return self._ops["-"]
+    else:
+      return self._ops["+"]
+
+  def get_compare(self):
+    if self._color == 'black':
+      return self._ops["<"]
+    else:
+      return self._ops[">"]
+
+  def capture(self, proposed_row, proposed_column):
     """
-    Moves horizontally and vertically until it hits the end of the board or another piece
+    If there are special conditions to capture piece other than the piece piece must be an opposing color and in the avialable_moves, this will tell if it's possible
     """
+    return True
 
-    def available_moves(self, starting_row, starting_column, game_board):
-        possible_moves = []
-        i = 1
-        proposed_row = starting_row
-        while self.no_conflict(self._color, proposed_row + i, starting_column, game_board):
-            possible_moves.append((proposed_row + i, starting_column))
-            i += 1
-        proposed_row = starting_row
-        i = 1
-        while self.no_conflict(self._color, proposed_row - i, starting_column, game_board):
-            possible_moves.append((proposed_row - i, starting_column))
-            i += 1
-        proposed_row = starting_row
-        i = 1
-        while self.no_conflict(self._color, proposed_row, starting_column + i, game_board):
-            possible_moves.append((proposed_row, starting_column + i))
-            i += 1
-        proposed_row = starting_row
-        i = 1
-        while self.no_conflict(self._color, proposed_row, starting_column - i, game_board):
-            possible_moves.append((proposed_row, starting_column - i))
-            i += 1
+  def elephant_move_list(self, game_board):
 
-        return possible_moves
+    moves = []
+
+    forwardRight = (self._moveForward(self._row, 2), self._col + 2)
+    forwardLeft = (self._moveForward(self._row, 2), self._col - 2)
+    backwardRight = (self._moveBackward(self._row, 2), self._col + 2)
+    backwardLeft = (self._moveBackward(self._row, 2), self._col - 2)
+
+    # TEST
+    # print("-----")
+    # print("piece info:\n", self._name,"\n", self._color, "\nRiver =", self._river, "\nBackwards =", self._moveBackward, "\nForwards =", self._moveForward)
+    # print("-----")
+    
+
+    # if moving forward isn't past river 
+    if self._compare(self._moveForward(self._row, 2), self._river):
+
+      # if no piece in in elephants way
+      if self.path_is_clear(forwardRight[0], forwardRight[1], game_board):
+        moves.append(forwardRight)
+      
+      if self.path_is_clear(forwardLeft[0], forwardLeft[1], game_board):
+        moves.append(forwardLeft)
+
+    # can always move backwards, no_conflit will check for other pieces and off board
+    if self.path_is_clear(backwardRight[0], backwardRight[1], game_board):
+      moves.append(backwardRight)
+
+    if self.path_is_clear(backwardLeft[0], backwardLeft[1], game_board):
+      moves.append(backwardLeft)
+
+    print(moves)
+    return moves
+
+  def avialable_moves(self, game_board):
+    
+    possible_moves = [(starting_row, starting_column) for starting_row, starting_column in self.elephant_move_list(game_board) if self.no_conflict(game_board, starting_row, starting_column)]
+
+    # print(possible_moves)
+    return possible_moves
+
+  def path_is_clear(self, proposed_ending_row, proposed_ending_col, game_board):
+    check_row = 0
+    check_col = 0
+
+    # TEST
+    # print("----")
+    # print("in path is clear\nrow = ", proposed_ending_row,"\ncol = ", proposed_ending_col)
+    
+
+    # get first diagnoal space
+    if(self._row - proposed_ending_row == 2):
+      check_row = self._row - 1
+    else:
+      check_row = self._row + 1
+    
+    # TEST
+    # print("piece location = ", self._row, self._col)
+    # print("new row =", check_row)
+
+    if(self._col - proposed_ending_col == 2):
+      check_col = self._col - 1
+    else:
+      check_col = self._col + 1
+
+    # TEST
+    # print("new col =", check_col)
+
+    # check this space is in bounds
+    if not self.is_in_bounds(check_row, check_col):
+      return False
+
+    # check if space is empty
+
+    if game_board[check_row][check_col] != "____":
+      return False
+
+    return True
+
+class Cannon(Pieces):
+  def __init__(self, color, name):
+    # Fun thing to write article about
+    super(Cannon, self).__init__(color, name)
+
+  def capture(self, proposed_ending_row, proposed_ending_column):
+    return True
+
+  def cannon_move_list(self, game_board):
+    moves = []
+    
+
+    # 0 = Towards red, 1 = Towards black, 2 = Right, 3 = Left 
+    # directions = [(self._row + i, self._col), (self._row - i, self._col), (self._row, self._col + i), (self._row + i, self._col - i)]
+
+    direction_ops = [self._ops["+"], self._ops["-"], self._ops["+"], self._ops["-"]]
+
+    # for each possible direction
+    # print("0 = Towards red, 1 = Towards black, 2 = Right, 3 = Left")
+    for i in range(len(direction_ops)):
+      checking_for_capture = False
+
+      # determine which direction we checking if ii < 1 it's rows, otherwise columns
+      if i <= 1:
+        direction = direction_ops[i](self._row, 1)
+        space = (direction, self._col)
+
+      else:
+        direction = direction_ops[i](self._col, 1)
+        space = (self._row, direction)
+      
+      # print("which direction are we moving?", i)
+      # print("space", space)
+
+      # only check within bounds 0 - 9, no conflict will remove out of bounds
+      while self.is_in_bounds(space[0], space[1]):
+
+        # print(direction)
+        # if space is empty and we aren't trying to capture a peice
+        # print("check to add:", game_board[space[0]][space[1]] == "____" and not checking_for_capture)
+        if game_board[space[0]][space[1]] == "____" and not checking_for_capture:
+          # print("space is empty and we aren't looking to capture", space)
+          moves.append(space)
+
+        # if space is not empty and we are trying to capture a piece 
+        if game_board[space[0]][space[1]] != "____" and checking_for_capture:
+          # print("attempting caputre", space)
+          moves.append(space)
+          break
+        
+        # if space is not empty and we aren't trying to capture a piece
+        if game_board[space[0]][space[1]] != "____" and not checking_for_capture:
+          # print("we are now looking to capture", space)
+          checking_for_capture = True
+
+        # increment or decrement i based on direction
+        # EX: if moving right this will increment i, increasing the val of direction
+
+        direction = direction_ops[i](direction, 1)
+        # print("new direction = ", direction)
+
+        if i <= 1:
+          space = (direction, self._col)
+        else:
+          space = (self._row, direction)
+
+        # print("new space = ", space)
+
+        # print("direction = ", direction)
+        # print("greater or eqaul to 0 or less than equal to 9", direction >= 0 or direction <= 9)
+
+        # if ii <= 1:
+        #   direction = directions[ii][0]
+        # else:
+        #   direction = directions[ii][1]
+
+    # print(moves)
+    return moves
+
+  def avialable_moves(self, game_board):
+
+    possible_moves = [(starting_row, starting_column) for starting_row, starting_column in self.cannon_move_list(game_board) if self.no_conflict(game_board, starting_row, starting_column)]
+
+    # print(possible_moves)
+    return possible_moves
+
+class Chariot(Pieces):
+  def __init__(self, color, name):
+    # Fun thing to write article about
+    super(Chariot, self).__init__(color, name)
 
 
-class Cannon(Piece):
-    """
-    Moves like Chariot, however when the cannon wants to take a piece
-    it has to jump over one piece of any color before taking the unit
-    """
-    def available_moves(self, starting_row, starting_column, game_board):
-        possible_moves = []
+  def capture(self, proposed_ending_row, proposed_ending_column):
+    return True
 
-        # checks up moves
-        proposed_row = starting_row
-        i = 1
-        while self.no_conflict(self._color, proposed_row + i, starting_column, game_board):
-            possible_moves.append((proposed_row + i, starting_column))
-            proposed_row += i
-        self.cannon_jump("up", self._color, proposed_row + 2, starting_column, game_board, possible_moves)
+  def chariot_move_list(self, game_board):
+    moves = []
+    direction_ops = [self._ops["+"], self._ops["-"], self._ops["+"], self._ops["-"]]
 
-        # checks down moves
-        proposed_row = starting_row
-        i = 1
-        while self.no_conflict(self._color, proposed_row - i, starting_column, game_board):
-            possible_moves.append((proposed_row - i, starting_column))
-            proposed_row -= i
-        self.cannon_jump("down", self._color, proposed_row - 2, starting_column, game_board, possible_moves)
+    # for each possible direction
+    for i in range(len(direction_ops)):
 
-        # checks right moves
-        proposed_column = starting_column
-        i = 1
-        while self.no_conflict(self._color, starting_row, proposed_column + i, game_board):
-            possible_moves.append((starting_row, proposed_column + i))
-            proposed_column += 1
-        self.cannon_jump("right", self._color, starting_row, proposed_column + 2, game_board, possible_moves)
+      # determine which direction we are checking if i <= 1 it's rows, otherwise columns
+      if i <= 1:
+        direction = direction_ops[i](self._row, 1)
+        space = (direction, self._col)
+      else:
+        direction = direction_ops[i](self._col, 1)
+        space = (self._row, direction)
 
-        # checks left moves
-        proposed_column = starting_column
-        i = 1
-        while self.no_conflict(self._color, starting_row, proposed_column - i, game_board):
-            proposed_column -= 1
-        self.cannon_jump("left", self._color, starting_row, proposed_column - 2, game_board, possible_moves)
+      # only check if in bounds
+      while self.is_in_bounds(space[0], space[1]):
 
-        # print("Cannon, possible moves:",possible_moves)
-        return possible_moves
+        # if space is empty
+        if game_board[space[0]][space[1]] == "____" :
+          moves.append(space)
+        
+        # if space is not empty, end here
+        if game_board[space[0]][space[1]] != "____" :
+          moves.append(space)
+          break
+
+        direction = direction_ops[i](direction, 1)
+
+        if i <= 1:
+          space = (direction, self._col)
+        else:
+          space = (self._row, direction)
+
+    return moves
+
+  def avialable_moves(self, game_board):
+
+    possible_moves = [(starting_row, starting_column) for starting_row, starting_column in self.cannon_move_list(game_board) if self.no_conflict(game_board, starting_row, starting_column)]
+
+    # print(possible_moves)
+    return possible_moves
+
+class Horse(Pieces):
+  def __init__(self, color, name):
+    # Fun thing to write article about - super in python
+    super(Horse, self).__init__(color, name)
 
 
-class Solider(Piece):
-    """
-    can only move towards opposing color's side until it crosses the river. Then it can move horizontally.
-    It can never move towards its own side
-    """
-    def available_moves(self, starting_row, starting_column, game_board):
-        possible_moves = [(starting_row, starting_column) for starting_row, starting_column in
-                          self.solider_move_list(starting_row, starting_column, self._color)
-                          if self.no_conflict(self._color, starting_row, starting_column, game_board)]
+  def capture(self):
+    return True
 
-        return possible_moves
+  def horse_move_list(self, game_board):
 
+    moves = []
+    direction_ops = [self._ops["+"], self._ops["-"], self._ops["+"], self._ops["-"]]
+
+    for i in range(len(direction_ops)):
+      # determine which direction we are checking if i <= 1 it's rows, otherwise columns
+      if i <= 1:
+        direction = direction_ops[i](self._row, 1)
+        space = (direction, self._col)
+
+      else:
+        direction = direction_ops[i](self._col, 1)
+        diag = self._row
+        space = (self._row, direction)
+
+      # check first move is in bounds, then if it's not empty
+      if self.is_in_bounds(space[0], space[1]):
+        if game_board[space[0]][space[1]] != "____":
+          moves.append(space)
+          break
+      
+      # if first move is empty, add diagonal moves
+      if i <= 1:
+        direction = direction_ops[i](direction, 1)
+        diag = self._col - 1
+        moves.append((direction, diag))
+        diag = self._col + 1
+        moves.append((direction, diag))
+      else: 
+        direction = direction_ops[i](direction, 1)
+        diag = self._row - 1
+        moves.append((diag, direction))
+        diag = self._row + 1
+        moves.append((diag, direction))
+
+    return moves
+
+  def avialable_moves(self, game_board):
+
+    possible_moves = [(starting_row, starting_column) for starting_row, starting_column in self.horse_move_list(game_board) if self.no_conflict(game_board, starting_row, starting_column)]
+
+    # print(possible_moves)
+    return possible_moves
+
+
+game = XiangqiGame()
+
+# game.make_move('a4', 'a5')
+# game.make_move('e7', 'e6')
+# game.make_move('a5', 'a6')
+# game.make_move('c7', 'c6')
+# game.make_move('a6', 'b6')
+# game.make_move('b3', 'i3')
+# game.make_move('e6', 'e5')
+# game.make_move('b6', 'c6')
+# game.make_move('d10', 'e9')
+# game.make_move('c1', 'e3')
+# game.make_move('c10', 'e8')
+# game.make_move('e3', 'g5')
+# game.make_move('e8', 'c6')
+# game.make_move('g5', 'e7')
+
+game.make_move('b1', 'i2')
