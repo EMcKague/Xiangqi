@@ -155,6 +155,12 @@ class XiangqiGame:
 
         return
 
+    def get_board_location(self, col, row):
+        """
+        TO DO
+        """
+        return str(self._game_board[row][col])
+
     def check_for_moves_to_not_be_in_check(self, moving_piece_row, moving_piece_col, new_row, new_col, color):
         """
         called in in_checkmate
@@ -435,14 +441,34 @@ class XiangqiGame:
                 placeholder_list.append(str(self.get_num_to_letter(el)))
 
         return placeholder_list
+    
+    def make_readable_data(self, possible_moves):
+        """
+        TO DO
+        """
+        newlist=[]
+        for el in possible_moves:
+            temp = [el[1],el[0]]
+            temp[0] = self._num_to_letter[temp[0]]
+            temp[1] = str(temp[1])
+            temp = ''.join(temp[0:2])
+            newlist.append(temp)
+
+        newlist = ", ".join(newlist[0:])
+
+        return newlist
 
     def data_validation(self, starting_row, starting_column, ending_row, ending_column, ending_loc):
         """
         called in make_move
         checks input in make_move for the following:
-        within range of board, piece is at starting location, proper players turn,
-        proposed move is a legal move, game hasn't been won, won't cause the players king to be in check,
-        and the kings can't see each other.
+            within range of board 
+            piece is at starting location 
+            proper players turn
+            proposed move is a legal move 
+            game hasn't been won 
+            won't cause the players king to be in check
+            the kings can't see each other after move
         If any come back false, returns the proper message to display which error.
         :param starting_row: 3
         :param starting_column: "b"
@@ -455,7 +481,7 @@ class XiangqiGame:
         # input within range of board
         if ending_row not in range(1, 11) or ending_column not in self._letters_to_num or \
                 starting_row not in range(1, 11) or starting_column not in self._letters_to_num:
-            print("Input not on board. Valid row range = 1 - 10. Valid column range = a - i.")
+            print("Input not on board. Valid row range = 1 - 10. Valid column range = a - i")
             return False
 
         # there is piece at starting location
@@ -465,7 +491,7 @@ class XiangqiGame:
 
         # turn order
         if self._game_board[starting_row][starting_column].get_color() != self._player_turn:
-            print("It's " + str(self._player_turn) + "s turn.")
+            print("It's " + str(self._player_turn) + "s turn")
             return False
 
         # place to move to is in available moves for selected piece
@@ -473,7 +499,13 @@ class XiangqiGame:
                                                                                              self.get_letters_to_num(
                                                                                                  starting_column),
                                                                                              self._game_board):
-            print("That move is not available to " + str(self._game_board[starting_row][starting_column]))
+            print("\nThat move is not available to " + str(self._game_board[starting_row][starting_column]))
+            readableData = self._game_board[starting_row][starting_column].available_moves(starting_row,
+                                                                                             self.get_letters_to_num(
+                                                                                                 starting_column),
+                                                                                             self._game_board)
+            PossibleMovesReadable = self.make_readable_data(readableData);     
+            print("The available moves are", PossibleMovesReadable)
             return False
 
         # game state
@@ -514,7 +546,7 @@ class XiangqiGame:
         :parameter: (square moved from, square to move to) example: e1, e2
         :returns: True if piece moved successfully or False along with message if piece didn't move
         """
-        print("make_move, input:", starting_pos, ending_pos)
+        # print("MAKING MOVE \nFrom:", starting_pos,"\nTo:", ending_pos)
 
         # separate inputs into workable list indices
         starting_loc = []
@@ -999,6 +1031,7 @@ class Cannon(Piece):
             proposed_column -= 1
         self.cannon_jump("left", self._color, starting_row, proposed_column - 2, game_board, possible_moves)
 
+        # print("Cannon, possible moves:",possible_moves)
         return possible_moves
 
 
