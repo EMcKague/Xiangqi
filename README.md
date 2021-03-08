@@ -1,4 +1,4 @@
-# portfolio-project
+# Xiangqi
 
 ## example usage from cmd line
 ```
