@@ -1,4 +1,3 @@
-
 import operator
 
 
@@ -44,7 +43,7 @@ class XiangqiGame:
                                 }
         self.printStartMsg()
         self.printBoardWithStyling()
-        
+
     def set_pieces(self):
         for i in range(len(self._game_board)):
 
@@ -116,7 +115,8 @@ class XiangqiGame:
 
     def printBoardWithStyling(self):
         rowNum = 10
-        colLetter = ["  a", "  b", "  c", "  d", "  e", "  f", "  g", "  h", "  i"]
+        colLetter = ["  a", "  b", "  c", "  d", "  e",
+                     "  f", "  g", "  h", "  i"]
         for row in self._game_board:
             temp = []
             for el in row:
@@ -140,33 +140,29 @@ class XiangqiGame:
     def make_move(self, starting_pos, ending_pos):
 
         print("make_move, input =", starting_pos, ending_pos)
-        
+
         # convert inputs to work with table
         starting_loc = self.parse_input(starting_pos)
         ending_loc = self.parse_input(ending_pos)
 
-        # conditionals to check 
-        valid = (starting_loc[0] is not False and ending_loc[0] is not False)
-        invalid = starting_loc[0] is False or ending_loc[0] is False
-
         # check if piece is at starting_loc
-        self.validate_move_check_for_piece(starting_loc)
+        self.piece_at_location(starting_loc)
 
-        if valid:
+        if self.move_is_valid(starting_loc, ending_loc):
             self.validate_move_game_conditions(starting_loc, ending_loc)
 
         # if still valid, check conditions involving the generals
-        if valid:
+        if self.move_is_valid(starting_loc, ending_loc):
             # TO DO - Move will put king in own king check
             pass
 
-        # ensure move is valid to move on
-        if starting_loc[0] is False or ending_loc[0] is False:
+        if self.move_is_invalid(starting_pos, ending_pos):
             return False
 
         # move piece
         self.move_pieces(starting_loc, ending_loc)
-        self._game_board[ending_loc[0]][ending_loc[1]].update_location(ending_loc)
+        new_piece = self._game_board[ending_loc[0]][ending_loc[1]]
+        new_piece.update_location(ending_loc)
 
         # TO DO - check if game has been won
 
@@ -174,39 +170,48 @@ class XiangqiGame:
         self.printBoardWithStyling()
         return True
 
+    def move_is_valid(self, starting_loc, ending_loc):
+        if starting_loc[0] is not False and ending_loc[0] is not False:
+            return True
+        else:
+            return False
+
+    def move_is_invalid(self, starting_loc, ending_loc):
+        if starting_loc[0] is False or ending_loc[0] is False:
+            return True
+        else:
+            return False
+
     def move_pieces(self, starting_loc, ending_loc):
-        """       
-        """  
-  
+        """
+        """
+
         self._game_board[ending_loc[0]][ending_loc[1]] = \
             self._game_board[starting_loc[0]][starting_loc[1]]
         self._game_board[starting_loc[0]][starting_loc[1]] = "____"
 
     def parse_input(self, some_input):
 
-        temp = []
-        temp2 = []
-
         # breaks apart input
+        temp = []
         for el in some_input:
             temp.append(el)
 
         if len(some_input) == 3:
             temp[1] = str(temp[1] + str(temp[2]))
             temp.pop()
-        
+
         temp[1] = int(temp[1])
 
-        # Checks boundries and input type before conversion
-        dataValidation = [self.validate_move_input_and_bounderies(temp)]
-        if False in dataValidation:
+        if self.move_in_boundries(temp):
             print("Try Again")
             return False
 
-        temp2.append(self._row_conversion[temp[1]])
-        temp2.append(self._col_conversion[temp[0]])
+        new_loc = []
+        new_loc.append(self._row_conversion[temp[1]])
+        new_loc.append(self._col_conversion[temp[0]])
 
-        return temp2
+        return new_loc
 
     def reverse_parse_input(self, some_input):
 
@@ -227,26 +232,29 @@ class XiangqiGame:
         else:
             self._player_turn = "red"
 
-    def validate_move_input_and_bounderies(self, board_loc):
+    def move_in_boundries(self, board_loc):
         """
         """
+        proposed_col = board_loc[0]
+        proposed_row = board_loc[1]
+
         invalidRow = "is not a valid row"
         invalidCol = "is not a valid column"
 
         possibleCols = ["a", "b", "c", "d", "e", "f", "g", "h", "i"]
         possibleRows = list(range(1, 11))
 
-        count = 0
-        
-        if board_loc[0] not in possibleCols:
-            print(board_loc[0], invalidCol)
-            count += 1
+        failure_count = 0
 
-        if board_loc[1] not in possibleRows:
-            print(board_loc[1], invalidRow)
-            count += 1
-      
-        if count > 0:
+        if proposed_col not in possibleCols:
+            print(proposed_col, invalidCol)
+            failure_count += 1
+
+        if proposed_row not in possibleRows:
+            print(proposed_row, invalidRow)
+            failure_count += 1
+
+        if failure_count > 0:
             return False
         else:
             return True
@@ -256,32 +264,28 @@ class XiangqiGame:
         count_start = 0
         count_end = 0
         # Proper players turn
-        if self._game_board[starting_loc[0]][starting_loc[1]]._color \
-                != self._player_turn:
-
+        if self.incorrect_color_to_move(starting_loc):
             count_start += 1
             print("It's", self._player_turn + "'s turn. Invalid move")
 
         # Game hasn't been won
-        if self._game_state != "UNFINISHED":
-
+        if self.game_is_over():
             count_start += 1
             count_end += 1
             print("The game is over.", self._game_state)
 
         # Proposed ending location is an avaiable move
-        if (ending_loc[0], ending_loc[1]) not in self._game_board[starting_loc[0]][starting_loc[1]].avialable_moves(self._game_board):
+        if not self.proposed_move_is_available(starting_loc, ending_loc):
 
-            possible_moves = []
-            for el in self._game_board[starting_loc[0]][starting_loc[1]].avialable_moves(self._game_board):
-                possible_moves.append(self.reverse_parse_input(el))
-
+            possible_moves = self.get_possible_moves(starting_loc)
             og_ending_loc = self.reverse_parse_input(ending_loc)
-            print("The move to", og_ending_loc, "is not avaiable to", self._game_board[starting_loc[0]][starting_loc[1]])
+
+            print("The move to", og_ending_loc, "is not avaiable to",
+                  self._game_board[starting_loc[0]][starting_loc[1]])
             print("Your available moves are: ", ', '.join(possible_moves[:]))
 
             count_end += 1
-  
+
         if count_start > 0:
             starting_loc[0] = False
             starting_loc.pop()
@@ -289,13 +293,44 @@ class XiangqiGame:
             ending_loc[0] = False
             ending_loc.pop()
 
-    def validate_move_check_for_piece(self, starting_loc):
-        """
-        """
-        if self._game_board[starting_loc[0]][starting_loc[1]] == "____":
+    def incorrect_color_to_move(self, starting_loc):
+        row, col = starting_loc
+        if self._game_board[row][col]._color == self._player_turn:
+            return True
+        else:
+            return False
+
+    def piece_at_location(self, starting_loc):
+        row, col = starting_loc
+
+        if self._game_board[row][col] == "____":
             print("No piece at starting location")
             starting_loc[0] = False
             starting_loc.pop()
+
+    def game_is_over(self):
+        if self._game_state != "UNFINISHED":
+            return True
+        else:
+            return False
+
+    def proposed_move_is_available(self, starting_loc, ending_loc):
+        row, col = starting_loc
+        starting_piece = self._game_board[row][col]
+        available_moves = starting_piece.avialable_moves(self._game_board)
+
+        if ending_loc not in available_moves:
+            return False
+        else:
+            return True
+
+    def get_possible_moves(self, starting_loc):
+        possible_moves = []
+        piece = self._game_board[starting_loc[0]][starting_loc[1]]
+        for move in piece.avialable_moves(self._game_board):
+            possible_moves.append(self.reverse_parse_input(move))
+
+        return possible_moves
 
 
 class Pieces:
@@ -443,27 +478,27 @@ class Soldier(Pieces):
         else:
             return self._ops["<"]
 
-     def capture(self, proposed_row, proposed_column):
-         return True
+    def capture(self, proposed_row, proposed_column):
+        return True
 
     def solider_move_list(self):
 
-        forward = (self._moveForward(self._row,1), self._col)
+        forward = (self._moveForward(self._row, 1), self._col)
         left = (self._row, self._col - 1)
         backward = (self._row, self._moveBackward(self._col, 1))
 
         # check if piece has passed the river
-        if self._compare(self._row, self._river):  
+        if self._compare(self._row, self._river):
             return [forward, left, backward]
         else:
             return [forward]
 
+    def avialable_moves(self, game_board):
 
-  def avialable_moves(self, game_board):
+        possible_moves = [(starting_row, starting_column) for starting_row, starting_column in self.solider_move_list() if self.no_conflict(game_board, starting_row, starting_column)]
 
-    possible_moves = [(starting_row, starting_column) for starting_row, starting_column in self.solider_move_list() if self.no_conflict(game_board, starting_row, starting_column)]
+        return possible_moves
 
-    return possible_moves
 
 class General(Pieces):
 
@@ -500,7 +535,7 @@ class General(Pieces):
             return self._ops[">"]
         else:
             return self._ops["<"]
-  
+
     def capture(self, proposed_row, proposed_column):
         """
         
@@ -535,73 +570,73 @@ class General(Pieces):
 
         return possible_moves
 
+
 class Advisor(Pieces):
-    # HERE
-  def __init__(self, color, name):
-    # Fun thing to write article about
-    super(Advisor, self).__init__(color, name)
-    self._moveForward = self.get_moveForward()
-    self._moveBackward = self.get_moveBackward()
-    self._compareForward = self.get_compareForward()
-    self._palace_col_left_boundry = 3
-    self._palace_col_right_boundry = 5
-    self._palace_row_boundry = self.get_palace_boundry()
 
-  def get_moveForward(self):
-    if self._color == "black":
-      return self._ops["+"]
-    else:
-      return self._ops["-"]
+    def __init__(self, color, name):
+        super(Advisor, self).__init__(color, name)
+        self._moveForward = self.get_moveForward()
+        self._moveBackward = self.get_moveBackward()
+        self._compareForward = self.get_compareForward()
+        self._palace_col_left_boundry = 3
+        self._palace_col_right_boundry = 5
+        self._palace_row_boundry = self.get_palace_boundry()
 
-  def get_moveBackward(self):
-    if self._color == "red":
-      return self._ops["+"]
-    else:
-      return self._ops["-"]
+    def get_moveForward(self):
+        if self._color == "black":
+            return self._ops["+"]
+        else:
+            return self._ops["-"]
 
-  def get_palace_boundry(self):
-    if self._color == "red":
-      return 7
-    else:
-      return 2
+    def get_moveBackward(self):
+        if self._color == "red":
+            return self._ops["+"]
+        else:
+            return self._ops["-"]
 
-  def get_compareForward(self):
-    if self._color == "red":
-      return self._ops[">"]
-    else:
-      return self._ops["<"]
+    def get_palace_boundry(self):
+        if self._color == "red":
+            return 7
+        else:
+            return 2
 
-  def capture(self, proposed_row, proposed_column):
-    return True
+    def get_compareForward(self):
+        if self._color == "red":
+            return self._ops[">"]
+        else:
+            return self._ops["<"]
 
-  def advisor_move_list(self):
-    moves = []
+    def capture(self, proposed_row, proposed_column):
+        return True
 
-    # move foward left 
-    if self._compareForward(self._moveForward(self._row, 1), self._palace_row_boundry) and \
-    self._col -1 >= self._palace_col_left_boundry:
-      moves.append((self._moveForward(self._row, 1), (self._col - 1)))
+    def advisor_move_list(self):
+        moves = []
 
-    # move forward right 
-    if self._compareForward(self._moveForward(self._row, 1), self._palace_row_boundry) and \
-    self._col + 1 <= self._palace_col_right_boundry:
-      moves.append((self._moveForward(self._row, 1), self._col + 1))
+        # move foward left
+        if self._compareForward(self._moveForward(self._row, 1), self._palace_row_boundry) and \
+        self._col -1 >= self._palace_col_left_boundry:
+            moves.append((self._moveForward(self._row, 1), (self._col - 1)))
 
-    # move backwards right
-    if self._col + 1 >= self._palace_col_right_boundry:
-      moves.append((self._moveBackward(self._row, 1), self._col + 1))
+        # move forward right
+        if self._compareForward(self._moveForward(self._row, 1), self._palace_row_boundry) 
+        and self._col + 1 <= self._palace_col_right_boundry:
+                moves.append((self._moveForward(self._row, 1), self._col + 1))
 
-    # move backward - no need to check, no_conflict checks for offboard moves
-    if self._col - 1 >= self._palace_col_left_boundry:
-      moves.append((self._moveBackward(self._row, 1), self._col - 1))
+        # move backwards right
+        if self._col + 1 >= self._palace_col_right_boundry:
+            moves.append((self._moveBackward(self._row, 1), self._col + 1))
 
-    return moves
+        # move backward - no need to check, no_conflict checks for offboard moves
+        if self._col - 1 >= self._palace_col_left_boundry:
+            moves.append((self._moveBackward(self._row, 1), self._col - 1))
 
-  def avialable_moves(self, game_board):
+        return moves
 
-    possible_moves = [(starting_row, starting_column) for starting_row, starting_column in self.advisor_move_list() if self.no_conflict(game_board, starting_row, starting_column)]
+    def avialable_moves(self, game_board):
 
-    return possible_moves
+      possible_moves = [(starting_row, starting_column) for starting_row, starting_column in self.advisor_move_list() if self.no_conflict(game_board, starting_row, starting_column)]
+
+      return possible_moves
 
 class Elephant(Pieces):
 
