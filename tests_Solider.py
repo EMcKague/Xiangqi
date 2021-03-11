@@ -1,6 +1,7 @@
 import unittest
 from XiangqiGame import XiangqiGame
 
+
 class TestCase(unittest.TestCase):
     # TESTS HORIZONTAL MOVEMENT ONCE ACROSS RIVER
     def test1(self):
@@ -15,7 +16,7 @@ class TestCase(unittest.TestCase):
         game.make_move('c6', 'c5')
         # # red - test horizontal movement
         game.make_move('a6', 'b6')
-        location = game.get_board_location('b',6)
+        location = game.get_board_location('b', 6)
         expected = " RS "
         self.assertEqual(location, expected)
 
@@ -91,9 +92,10 @@ class TestCase(unittest.TestCase):
         game.make_move('e5', 'f5')
         # red - 
         game.make_move('c6', 'b6')
-        location = game.get_board_location('c',6)
+        location = game.get_board_location('c', 6)
         expected = " RS "
         self.assertEqual(location, expected)
-        
+
+
 if __name__ == '__main__':
     unittest.main()
