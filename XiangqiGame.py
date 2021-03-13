@@ -140,7 +140,7 @@ class XiangqiGame:
             else:
                 print(rowNum, "  ", '|'.join(temp[0:]))
             rowNum -= 1
-        print("    ", '  '.join(alpha[0:]))
+        print("    ", '  '.join(colLetter[0:]))
         print('\n')
 
     def printStartMsg(self):
@@ -176,11 +176,10 @@ class XiangqiGame:
         if self.move_is_valid(starting_loc, ending_loc):
             self.validate_move_game_conditions(starting_loc, ending_loc)
 
-        # if still valid, check conditions involving the generals
         if self.move_is_valid(starting_loc, ending_loc):
             self.validate_move_general_conditions(starting_loc, ending_loc)
 
-        if self.move_is_invalid(starting_pos, ending_pos):
+        if self.move_is_invalid(starting_loc, ending_loc):
             return False
 
         # move piece
@@ -191,6 +190,7 @@ class XiangqiGame:
 
         # check if game has been won
         if self.gen_is_in_check(self._player_turn, True):
+
             self.set_game_state(self._player_turn)
 
         self.printBoardWithStyling()
@@ -240,7 +240,7 @@ class XiangqiGame:
 
         temp[1] = int(temp[1])
 
-        if self.move_in_boundries(temp):
+        if not self.move_in_boundries(temp):
             print("Try Again")
             return False
 
@@ -329,14 +329,15 @@ class XiangqiGame:
     def incorrect_color_to_move(self, starting_loc):
         row, col = starting_loc
         if self._game_board[row][col]._color == self._player_turn:
-            return True
-        else:
             return False
+        else:
+            return True
 
     def piece_at_location(self, starting_loc):
+        # print("starting_loc = ", starting_loc)
         row, col = starting_loc
 
-        if self._game_board[row][col] == "____":
+        if self.space_is_empty(starting_loc):
             print("No piece at starting location")
             starting_loc[0] = False
             starting_loc.pop()
@@ -349,10 +350,10 @@ class XiangqiGame:
 
     def proposed_move_is_available(self, starting_loc, ending_loc):
         row, col = starting_loc
+        end = tuple(ending_loc)
         starting_piece = self._game_board[row][col]
-        available_moves = starting_piece.avialable_moves(self._game_board)
-
-        if ending_loc not in available_moves:
+        available_moves = starting_piece.available_moves(self._game_board)
+        if end not in available_moves:
             return False
         else:
             return True
@@ -360,12 +361,13 @@ class XiangqiGame:
     def get_possible_moves(self, starting_loc):
         possible_moves = []
         piece = self._game_board[starting_loc[0]][starting_loc[1]]
-        for move in piece.avialable_moves(self._game_board):
+        for move in piece.available_moves(self._game_board):
             possible_moves.append(self.reverse_parse_input(move))
 
         return possible_moves
 
     def space_is_empty(self, location):
+        # print(location)
         row, col = location
 
         if self._game_board[row][col] == "____":
@@ -374,18 +376,19 @@ class XiangqiGame:
             return False
 
     def validate_move_general_conditions(self, starting_loc, ending_loc):
+        # print("validating general conditions")
+
         gen_check_msg = "This move would put your general in check"
         fly_gen_msg = "The other general could take "
         "your general with this move"
         color = self._game_board[starting_loc[0]][starting_loc[1]]._color
-        gen_in_check = self.gen_is_in_check(color)
-        fly_gen_move_avail = self.see_evil(starting_loc, ending_loc)
 
         # move piece to new location - for testing purposes
+        # print("moving piece for testing")
         self.move_pieces(starting_loc, ending_loc)
 
         # would the move put your general in check
-        if gen_in_check:
+        if self.gen_is_in_check(color):
             # move the piece back
             self.move_pieces(ending_loc, starting_loc)
             print(gen_check_msg)
@@ -393,11 +396,11 @@ class XiangqiGame:
             ending_loc.pop()
 
         # check for flying general
-        if fly_gen_move_avail:
+        if self.fly_gen_move_avail(starting_loc, ending_loc):
             # move the piece back
             self.move_pieces(ending_loc, starting_loc)
             print(fly_gen_msg)
-            # return False
+            return False
             ending_loc[0] = False
             ending_loc.pop()
 
@@ -416,8 +419,8 @@ class XiangqiGame:
 
         return (11, 11)
 
-    def see_evil(self, starting_loc, ending_loc):
-
+    def fly_gen_move_avail(self, starting_loc, ending_loc):
+        # print("calling fly_gen_move_avail")
         # get gen locations
         RG_location = self.get_general_location("red")
         BG_location = self.get_general_location("black")
@@ -445,6 +448,7 @@ class XiangqiGame:
         if checkmate is true, checks if the general of the
         color passed is in checkmate
         """
+        # print("calling gen_is_in_check")
 
         gen_location = self.get_general_location(color)
         gen_piece = self._game_board[gen_location[0]][gen_location[1]]
@@ -473,18 +477,25 @@ class XiangqiGame:
             # if gen's location is in opposing colors moves
             if gen_location in opposing_col_moves:
                 return True
+            else:
+                return False
 
     def avaiable_moves_for_color(self, color):
+        # print("getting moves for opposite color")
         moves = []
         # iterate through the board
         for row in range(len(self._game_board)):
             for col in range(len(self._game_board[row])):
                 location = self._game_board[row][col]
-                if self.space_is_empty((row, col)):
+                # print("location = ", location)
+                if not self.space_is_empty((row, col)):
                     if location._color == color:
                         moves = location.available_moves(self._game_board)
+                        # print("Piece = ", location._name)
+                        # print("Available moves = ", moves)
                         moves.append(moves)
-
+        # print("opposing colors moves = ")
+        # print(moves)
         return moves
 
     def set_game_state(self, color):
@@ -498,7 +509,7 @@ class XiangqiGame:
     def get_board_location(self, some_input):
         location = self.parse_input(some_input)
 
-        if self.space_is_empty(location):
+        if not self.space_is_empty(location):
             piece = self._game_board[location[0]][location[1]]._name
         else:
             piece = self._game_board[location[0]][location[1]]
@@ -539,7 +550,7 @@ class Pieces:
 
     def get_general_location(self, color, game_board):
         piece_color = color == "red"
-        name = " RG " if color else " BG "
+        name = " RG " if piece_color else " BG "
 
         for el in game_board:
             if name in el:
@@ -570,6 +581,14 @@ class Pieces:
             return False
         else:
             return True
+
+    def space_is_empty(self, location, game_board):
+        row, col = location
+
+        if game_board[row][col] == "____":
+            return True
+        else:
+            return False
 
 
 class Soldier(Pieces):
@@ -620,7 +639,7 @@ class Soldier(Pieces):
         else:
             return [forward]
 
-    def avialable_moves(self, game_board):
+    def available_moves(self, game_board):
 
         possible_moves = [(starting_row, starting_col) for starting_row,
                           starting_col in self.solider_move_list() if
@@ -802,7 +821,7 @@ class Advisor(Pieces):
 
         return moves
 
-    def avialable_moves(self, game_board):
+    def available_moves(self, game_board):
 
         possible_moves = [(starting_row, starting_column) for
                           starting_row, starting_column in
@@ -851,7 +870,7 @@ class Elephant(Pieces):
         """
         If there are special conditions to capture piece other
         than the piece piece must be an opposing color and in
-        the avialable_moves, this will tell if it's possible
+        the available_moves, this will tell if it's possible
         """
         return True
 
@@ -861,7 +880,7 @@ class Elephant(Pieces):
         else:
             return False
 
-    def no_piece_in_path(self, location):
+    def no_piece_in_path(self, location, game_board):
 
         if self.path_is_clear(location[0], location[1], game_board):
             return True
@@ -878,21 +897,21 @@ class Elephant(Pieces):
         backwardLeft = (self._moveBackward(self._row, 2), self._col - 2)
 
         if self.not_past_river():
-            if self.no_piece_in_path(forwardRight):
+            if self.no_piece_in_path(forwardRight, game_board):
                 moves.append(forwardRight)
 
-            if self.no_piece_in_path(forwardLeft):
+            if self.no_piece_in_path(forwardLeft, game_board):
                 moves.append(forwardLeft)
 
-        if self.no_piece_in_path(backwardRight):
+        if self.no_piece_in_path(backwardRight, game_board):
             moves.append(backwardRight)
 
-        if self.no_piece_in_path(backwardLeft):
+        if self.no_piece_in_path(backwardLeft, game_board):
             moves.append(backwardLeft)
 
         return moves
 
-    def avialable_moves(self, game_board):
+    def available_moves(self, game_board):
 
         possible_moves = [(starting_row, starting_column) for
                           starting_row, starting_column in
@@ -958,14 +977,29 @@ class Cannon(Pieces):
             while self.is_in_bounds(space):
 
                 # if space is empty and we aren't trying to capture a peice
-                if (game_board.space_is_empty(space) and not capture):
+                if (self.space_is_empty(space, game_board) and not capture):
                     moves.append(space)
 
                 # if space is not empty and we are trying to capture a piece
-                if not self.space_is_empty(space) and capture:
+                if not self.space_is_empty(space, game_board) and capture:
                     moves.append(space)
                     break
 
+                # if space is not empty and we aren't trying to capture a piece
+                if self.space_is_empty(space, game_board) and not capture:
+                    capture = True
+
+                # increment or decrement i based on direction
+                # EX: if moving right this will increment i
+                # increasing the val of direction
+                direction = direction_ops[oper](direction, 1)
+
+                if oper <= 1:
+                    space = (direction, self._col)
+                else:
+                    space = (self._row, direction)
+
+        # print("cannon moves = ", moves)
         return moves
 
     def available_moves(self, game_board):
@@ -989,12 +1023,14 @@ class Chariot(Pieces):
 
     def chariot_move_list(self, game_board):
         moves = []
-        direction_ops = [self._ops["+"], self._ops["-"], self._ops["+"], self._ops["-"]]
+        direction_ops = [self._ops["+"], self._ops["-"],
+                         self._ops["+"], self._ops["-"]]
 
         # for each possible direction
         for i in range(len(direction_ops)):
 
-            # determine which direction we are checking if i <= 1 it's rows, otherwise columns
+            # determine which direction we are checking
+            # i <= 1 it's rows, otherwise columns
             if i <= 1:
                 direction = direction_ops[i](self._row, 1)
                 space = (direction, self._col)
@@ -1003,14 +1039,14 @@ class Chariot(Pieces):
                 space = (self._row, direction)
 
             # only check if in bounds
-            while self.is_in_bounds(space[0], space[1]):
+            while self.is_in_bounds((space[0], space[1])):
 
                 # if space is empty
-                if game_board[space[0]][space[1]] == "____":
+                if self.space_is_empty(space, game_board):
                     moves.append(space)
 
                 # if space is not empty, end here
-                if game_board.space_is_empty(space):
+                if not self.space_is_empty(space, game_board):
                     moves.append(space)
                     break
 
@@ -1023,6 +1059,17 @@ class Chariot(Pieces):
 
         return moves
 
+    def available_moves(self, game_board):
+
+        possible_moves = [(starting_row, starting_column) for
+                          starting_row, starting_column in
+                          self.chariot_move_list(game_board) if
+                          self.no_conflict(game_board,
+                          starting_row, starting_column)]
+
+        return possible_moves
+
+
 class Horse(Pieces):
     def __init__(self, color, name):
         # Fun thing to write article about - super in python
@@ -1034,10 +1081,12 @@ class Horse(Pieces):
     def horse_move_list(self, game_board):
 
         moves = []
-        direction_ops = [self._ops["+"], self._ops["-"], self._ops["+"], self._ops["-"]]
+        direction_ops = [self._ops["+"], self._ops["-"],
+                         self._ops["+"], self._ops["-"]]
 
         for i in range(len(direction_ops)):
-            # determine which direction we are checking if i <= 1 it's rows, otherwise columns
+            # determine which direction we are checking
+            # if i <= 1 it's rows, otherwise columns
             if i <= 1:
                 direction = direction_ops[i](self._row, 1)
                 space = (direction, self._col)
@@ -1049,10 +1098,10 @@ class Horse(Pieces):
 
             # check first move is in bounds, then if it's not empty
             if self.is_in_bounds(space):
-                if not game_board.space_is_empty(space):
+                if not self.space_is_empty(space, game_board):
                     moves.append(space)
                     break
-        
+
             # if first move is empty, add diagonal moves
             if i <= 1:
                 direction = direction_ops[i](direction, 1)
@@ -1060,7 +1109,7 @@ class Horse(Pieces):
                 moves.append((direction, diag))
                 diag = self._col + 1
                 moves.append((direction, diag))
-            else: 
+            else:
                 direction = direction_ops[i](direction, 1)
                 diag = self._row - 1
                 moves.append((diag, direction))
@@ -1071,6 +1120,10 @@ class Horse(Pieces):
 
     def available_moves(self, game_board):
 
-      possible_moves = [(starting_row, starting_column) for starting_row, starting_column in self.chariot_move_list(game_board) if self.no_conflict(game_board, starting_row, starting_column)]
+        possible_moves = [(starting_row, starting_column) for
+                          starting_row, starting_column in
+                          self.horse_move_list(game_board) if
+                          self.no_conflict(game_board,
+                          starting_row, starting_column)]
 
-      return possible_moves
+        return possible_moves

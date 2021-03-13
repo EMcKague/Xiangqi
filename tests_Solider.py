@@ -11,7 +11,8 @@ class TestCase(unittest.TestCase):
     def test1(self):
         game = XiangqiGame()
 
-        moves = [('a4', 'a5'), ('c7', 'c6'), ('a5', 'a6'), ('c6', 'c5'), ('a6', 'b6')]
+        moves = [('a4', 'a5'), ('c7', 'c6'), ('a5', 'a6'),
+                 ('c6', 'c5'), ('a6', 'b6')]
         for el in range(len(moves)):
             game.make_move(moves[el][0], moves[el][1])
 
@@ -51,12 +52,13 @@ class TestCase(unittest.TestCase):
         location = game.get_board_location('b5')
         expected = empty
         self.assertEqual(location, expected)
-    
+
     # TESTS PIECE CAPTURE
     def test5(self):
         game = XiangqiGame()
 
-        moves = [('a4', 'a5'), ('c7', 'c6'), ('a5', 'a6'), ('c6', 'c5'), ('a6', 'a7')]
+        moves = [('a4', 'a5'), ('c7', 'c6'), ('a5', 'a6'), ('c6', 'c5'),
+                 ('a6', 'a7')]
         for el in range(len(moves)):
             game.make_move(moves[el][0], moves[el][1])
 
@@ -68,8 +70,9 @@ class TestCase(unittest.TestCase):
     def test6(self):
         game = XiangqiGame()
 
-        moves = [('a4', 'a5'), ('c7', 'c6'), ('a5', 'a6'), ('c6', 'c5'), ('a6', 'b6'), ('e7', 'e6'),
-        ('c4', 'c5'), ('e6', 'e5'), ('c5', 'c6'), ('e5', 'f5'), ('c6', 'b6')]
+        moves = [('a4', 'a5'), ('c7', 'c6'), ('a5', 'a6'), ('c6', 'c5'),
+                 ('a6', 'b6'), ('e7', 'e6'), ('c4', 'c5'), ('e6', 'e5'),
+                 ('c5', 'c6'), ('e5', 'f5'), ('c6', 'b6')]
         for el in range(len(moves)):
             game.make_move(moves[el][0], moves[el][1])
 
